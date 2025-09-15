@@ -1,0 +1,128 @@
+from django.shortcuts import render, redirect, get_object_or_404
+from django.contrib.auth.decorators import login_required
+from django.contrib import messages
+from django.db.models import Q
+from jobs.models import Job, Category
+from users.models import User
+from django.core.paginator import Paginator
+
+
+def dashboard(request):
+    """Main dashboard view - shows different content based on user role"""
+    if not request.user.is_authenticated:
+        # Show public landing page for anonymous users
+        jobs = Job.objects.filter(status='open').order_by('-created_at')[:6]
+        categories = Category.objects.all()[:8]
+        return render(request, 'core/landing.html', {
+            'jobs': jobs,
+            'categories': categories
+        })
+    
+    # Check if fundi needs to complete onboarding
+    if (request.user.role == 'fundi' and 
+        not request.user.onboarding_complete):
+        return redirect('fundi_onboarding')
+    
+    # Show role-specific dashboard
+    if request.user.role == 'customer':
+        # Customer dashboard - show their posted jobs and available fundis
+        user_jobs = request.user.posted_jobs.all().order_by('-created_at')[:5]
+        available_jobs = Job.objects.filter(status='open').order_by('-created_at')[:6]
+        return render(request, 'core/customer_dashboard.html', {
+            'user_jobs': user_jobs,
+            'available_jobs': available_jobs
+        })
+    
+    elif request.user.role == 'fundi':
+        # Fundi dashboard - show available jobs and their applications
+        available_jobs = Job.objects.filter(
+            status='open'
+        ).exclude(
+            applications__fundi=request.user
+        ).order_by('-created_at')[:6]
+        
+        my_applications = request.user.job_applications.all().order_by('-created_at')[:5]
+        assigned_jobs = request.user.assigned_jobs.filter(
+            status__in=['in_progress', 'completed']
+        ).order_by('-updated_at')[:5]
+        
+        return render(request, 'core/fundi_dashboard.html', {
+            'available_jobs': available_jobs,
+            'my_applications': my_applications,
+            'assigned_jobs': assigned_jobs
+        })
+    
+    # Default dashboard for other roles
+    return render(request, 'core/dashboard.html')
+
+
+def job_list(request):
+    """List all available jobs with filtering and search"""
+    jobs = Job.objects.filter(status='open')
+    categories = Category.objects.all()
+    
+    # Search functionality
+    search_query = request.GET.get('search', '')
+    if search_query:
+        jobs = jobs.filter(
+            Q(title__icontains=search_query) |
+            Q(description__icontains=search_query) |
+            Q(location__icontains=search_query)
+        )
+    
+    # Category filter
+    category_filter = request.GET.get('category', '')
+    if category_filter:
+        jobs = jobs.filter(category__name=category_filter)
+    
+    # Location filter
+    location_filter = request.GET.get('location', '')
+    if location_filter:
+        jobs = jobs.filter(location__icontains=location_filter)
+    
+    # Urgency filter
+    urgency_filter = request.GET.get('urgency', '')
+    if urgency_filter:
+        jobs = jobs.filter(urgency=urgency_filter)
+    
+    # Pagination
+    paginator = Paginator(jobs, 12)  # Show 12 jobs per page
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+    
+    context = {
+        'page_obj': page_obj,
+        'categories': categories,
+        'search_query': search_query,
+        'category_filter': category_filter,
+        'location_filter': location_filter,
+        'urgency_filter': urgency_filter,
+    }
+    
+    return render(request, 'core/job_list.html', context)
+
+
+def job_detail(request, job_id):
+    """Show detailed view of a specific job"""
+    job = get_object_or_404(Job, id=job_id)
+    user_has_applied = False
+    
+    if request.user.is_authenticated and request.user.role == 'fundi':
+        user_has_applied = job.applications.filter(fundi=request.user).exists()
+    
+    context = {
+        'job': job,
+        'user_has_applied': user_has_applied,
+    }
+    
+    return render(request, 'core/job_detail.html', context)
+
+
+def about(request):
+    """About page"""
+    return render(request, 'core/about.html')
+
+
+def contact(request):
+    """Contact page"""
+    return render(request, 'core/contact.html')
