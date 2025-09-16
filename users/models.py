@@ -34,6 +34,10 @@ class User(AbstractUser):
     role = models.CharField(max_length=10, choices=ROLE_CHOICES)
     phone_number = models.CharField(max_length=20, blank=True)
     location = models.CharField(max_length=100, blank=True)
+    latitude = models.DecimalField(max_digits=9, decimal_places=6, null=True, blank=True)
+    longitude = models.DecimalField(max_digits=9, decimal_places=6, null=True, blank=True)
+    profile_photo = models.ImageField(upload_to='customer_photos/', null=True, blank=True)
+    id_document = models.ImageField(upload_to='customer_ids/', null=True, blank=True)
     date_joined = models.DateTimeField(auto_now_add=True)
     is_verified = models.BooleanField(default=False)
     onboarding_complete = models.BooleanField(default=False)
@@ -56,10 +60,12 @@ class FundiProfile(models.Model):
     total_jobs_completed = models.PositiveIntegerField(default=0)
     latitude = models.DecimalField(max_digits=9, decimal_places=6, null=True, blank=True)
     longitude = models.DecimalField(max_digits=9, decimal_places=6, null=True, blank=True)
+    # Verification fields
     profile_photo = models.ImageField(upload_to='fundi_photos/', null=True, blank=True)
     id_document = models.ImageField(upload_to='fundi_ids/', null=True, blank=True)
-    verification_status = models.CharField(max_length=20, choices=[('pending', 'Pending'), ('verified', 'Verified'), ('rejected', 'Rejected')], default='pending')
+    verification_status = models.CharField(max_length=20, choices=[('pending', 'Pending'), ('approved', 'Approved'), ('rejected', 'Rejected')], default='pending')
     verification_comment = models.TextField(blank=True)
+    verified_at = models.DateTimeField(null=True, blank=True)
     
     def __str__(self):
         return f"{self.user.email} - Fundi Profile"

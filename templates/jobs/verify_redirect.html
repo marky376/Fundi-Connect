@@ -1,0 +1,28 @@
+{% extends 'base/base.html' %}
+{% block title %}Verification Required{% endblock %}
+{% block content %}
+<div class="container py-5 text-center">
+  <div class="card shadow-lg mx-auto" style="max-width:500px;">
+    <div class="card-body p-5">
+      <h2 class="fw-bold text-danger mb-3">Verification Required</h2>
+      <p class="mb-3">You must be verified before you can use this feature.</p>
+      <p class="mb-3">For more information, you will be redirected to the Contact Us section.</p>
+      <div class="display-6 mb-3">Redirecting in <span id="countdown">{{ seconds }}</span> seconds...</div>
+      <a href="{{ redirect_url }}" class="btn btn-primary">Go to Contact Us Now</a>
+    </div>
+  </div>
+</div>
+<script>
+  let seconds = {{ seconds }};
+  const countdownEl = document.getElementById('countdown');
+  const redirectUrl = "{{ redirect_url }}";
+  const timer = setInterval(function() {
+    seconds--;
+    countdownEl.textContent = seconds;
+    if (seconds <= 0) {
+      clearInterval(timer);
+      window.location.href = redirectUrl;
+    }
+  }, 1000);
+</script>
+{% endblock %}

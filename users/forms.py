@@ -31,15 +31,6 @@ class CustomerSignupForm(SignupForm):
         return user
 
 
-class FundiVerificationForm(forms.ModelForm):
-    class Meta:
-        model = FundiProfile
-        fields = ['profile_photo', 'id_document']
-        widgets = {
-            'profile_photo': forms.ClearableFileInput(attrs={'class': 'form-control'}),
-            'id_document': forms.ClearableFileInput(attrs={'class': 'form-control'}),
-        }
-
 class FundiOnboardingForm(forms.Form):
     location = forms.CharField(
         max_length=100,
@@ -49,6 +40,8 @@ class FundiOnboardingForm(forms.Form):
             'placeholder': 'e.g., Nairobi, Westlands'
         })
     )
+    profile_photo = forms.ImageField(required=True, help_text='Upload your profile photo')
+    id_document = forms.ImageField(required=True, help_text='Upload your ID document')
     def clean_location(self):
         location = self.cleaned_data['location']
         if not location.strip():

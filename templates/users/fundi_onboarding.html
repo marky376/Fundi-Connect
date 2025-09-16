@@ -11,17 +11,67 @@
           <form method="post" enctype="multipart/form-data">
             {% csrf_token %}
             {% for field in form %}
-              <div class="mb-3">
-                <label for="{{ field.id_for_label }}" class="form-label fw-semibold">{{ field.label }}</label>
-                {{ field }}
-                {% if field.help_text %}
-                  <small class="form-text text-muted">{{ field.help_text }}</small>
-                {% endif %}
-                {% if field.errors %}
-                  <div class="text-danger small">{{ field.errors|striptags }}</div>
-                {% endif %}
-              </div>
+              {% if field.name == 'profile_photo' %}
+                <div class="mb-3">
+                  <label for="profile_photo" class="form-label fw-semibold">Profile Photo <span class="text-danger">*</span></label>
+                  {{ field }}
+                  <div class="mt-2">
+                    <img id="profilePhotoPreview" style="display:none;max-width:120px;max-height:120px;" alt="Profile Photo Preview">
+                  </div>
+                  <small class="form-text text-muted">Upload a clear photo of yourself.</small>
+                  {% if field.errors %}
+                    <div class="text-danger small">{{ field.errors|striptags }}</div>
+                  {% endif %}
+                </div>
+              {% elif field.name == 'id_document' %}
+                <div class="mb-3">
+                  <label for="id_document" class="form-label fw-semibold">ID Document <span class="text-danger">*</span></label>
+                  {{ field }}
+                  <div class="mt-2">
+                    <img id="idDocumentPreview" style="display:none;max-width:120px;max-height:120px;" alt="ID Document Preview">
+                  </div>
+                  <small class="form-text text-muted">Upload your national ID or passport.</small>
+                  {% if field.errors %}
+                    <div class="text-danger small">{{ field.errors|striptags }}</div>
+                  {% endif %}
+                </div>
+              {% else %}
+                <div class="mb-3">
+                  <label for="{{ field.id_for_label }}" class="form-label fw-semibold">{{ field.label }}</label>
+                  {{ field }}
+                  {% if field.help_text %}
+                    <small class="form-text text-muted">{{ field.help_text }}</small>
+                  {% endif %}
+                  {% if field.errors %}
+                    <div class="text-danger small">{{ field.errors|striptags }}</div>
+                  {% endif %}
+                </div>
+              {% endif %}
             {% endfor %}
+            <script>
+              document.getElementById('profile_photo').addEventListener('change', function(e) {
+                const preview = document.getElementById('profilePhotoPreview');
+                if (e.target.files && e.target.files[0]) {
+                  const reader = new FileReader();
+                  reader.onload = function(ev) {
+                    preview.src = ev.target.result;
+                    preview.style.display = 'block';
+                  }
+                  reader.readAsDataURL(e.target.files[0]);
+                }
+              });
+              document.getElementById('id_document').addEventListener('change', function(e) {
+                const preview = document.getElementById('idDocumentPreview');
+                if (e.target.files && e.target.files[0]) {
+                  const reader = new FileReader();
+                  reader.onload = function(ev) {
+                    preview.src = ev.target.result;
+                    preview.style.display = 'block';
+                  }
+                  reader.readAsDataURL(e.target.files[0]);
+                }
+              });
+            </script>
             <button type="submit" class="btn btn-primary w-100 py-2 mt-2">Complete Onboarding</button>
           </form>
         </div>

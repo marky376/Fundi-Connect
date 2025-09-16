@@ -38,24 +38,24 @@ class UserAdmin(BaseUserAdmin):
 
 
 class FundiProfileAdmin(admin.ModelAdmin):
-    list_display = ('user', 'availability', 'rating', 'total_jobs_completed', 'hourly_rate', 'verification_status')
+    list_display = ('user', 'availability', 'rating', 'total_jobs_completed', 'hourly_rate', 'verification_status', 'verified_at')
     list_filter = ('availability', 'rating', 'experience_years', 'verification_status')
     search_fields = ('user__email', 'user__first_name', 'user__last_name', 'skills')
-    readonly_fields = ('rating', 'total_jobs_completed')
+    readonly_fields = ('rating', 'total_jobs_completed', 'verified_at')
     inlines = [PortfolioImageInline]
-
-    actions = ['approve_verification', 'reject_verification']
+    fields = ('user', 'skills', 'description', 'experience_years', 'hourly_rate', 'availability', 'rating', 'total_jobs_completed', 'latitude', 'longitude', 'profile_photo', 'id_document', 'verification_status', 'verification_comment', 'verified_at')
 
     def approve_verification(self, request, queryset):
-        updated = queryset.update(verification_status='verified', verification_comment='')
-        self.message_user(request, f"{updated} fundi(s) marked as verified.")
+        updated = queryset.update(verification_status='approved')
+        self.message_user(request, f"{updated} fundi profiles approved.")
+    approve_verification.short_description = "Approve selected fundi verification"
 
     def reject_verification(self, request, queryset):
-        updated = queryset.update(verification_status='rejected', verification_comment='Rejected by admin.')
-        self.message_user(request, f"{updated} fundi(s) marked as rejected.")
+        updated = queryset.update(verification_status='rejected')
+        self.message_user(request, f"{updated} fundi profiles rejected.")
+    reject_verification.short_description = "Reject selected fundi verification"
 
-    approve_verification.short_description = "Approve selected fundi verifications"
-    reject_verification.short_description = "Reject selected fundi verifications"
+    actions = ['approve_verification', 'reject_verification']
 
 
 class PortfolioImageAdmin(admin.ModelAdmin):

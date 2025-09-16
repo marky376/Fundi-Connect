@@ -1,23 +1,6 @@
 from django import forms
 from django.forms import inlineformset_factory
-from .models import Job, JobApplication, JobImage, Category, Payment
-
-# Payment initiation form
-class PaymentForm(forms.ModelForm):
-    class Meta:
-        model = Payment
-        fields = ['amount', 'phone_number']
-        widgets = {
-            'amount': forms.NumberInput(attrs={
-                'class': 'form-control',
-                'placeholder': 'Amount (KES)',
-                'step': '0.01'
-            }),
-            'phone_number': forms.TextInput(attrs={
-                'class': 'form-control',
-                'placeholder': 'Mpesa phone number'
-            }),
-        }
+from .models import Job, JobApplication, JobImage, Category
 
 
 class JobForm(forms.ModelForm):

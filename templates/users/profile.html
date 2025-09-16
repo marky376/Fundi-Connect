@@ -7,28 +7,123 @@
       <div class="card shadow-lg border-0">
         <div class="card-body p-5">
           <h2 class="fw-bold mb-3 text-primary">My Profile</h2>
+          <div class="mb-3 text-center">
+            {% if user.role == 'customer' and user.profile_photo %}
+              <img src="{{ user.profile_photo.url }}" class="img-fluid rounded-circle shadow-sm mb-2" style="max-width:120px;max-height:120px;" alt="Profile Photo">
+            {% elif user.role == 'customer' %}
+              <img src="https://cdn-icons-png.flaticon.com/512/3135/3135715.png" class="img-fluid rounded-circle shadow-sm mb-2" style="max-width:120px;max-height:120px;" alt="Default Avatar">
+            {% endif %}
+          </div>
           <p class="mb-2"><strong>Name:</strong> {{ user.first_name }} {{ user.last_name }}</p>
           <p class="mb-2"><strong>Email:</strong> {{ user.email }}</p>
           <p class="mb-2"><strong>Role:</strong> {{ user.role|title }}</p>
+          {% if user.role == 'customer' %}
+            <hr>
+            <form method="post" action="" class="mb-3" enctype="multipart/form-data">
+              {% csrf_token %}
+              <div class="mb-2">
+                <label for="location" class="form-label">Location</label>
+                <input type="text" name="location" id="location" class="form-control" value="{{ user.location }}" required>
+              </div>
+              <div class="mb-2">
+                <label for="latitude" class="form-label">Latitude</label>
+                <input type="text" name="latitude" id="latitude" class="form-control" value="{{ user.latitude }}" readonly>
+              </div>
+              <div class="mb-2">
+                <label for="longitude" class="form-label">Longitude</label>
+                <input type="text" name="longitude" id="longitude" class="form-control" value="{{ user.longitude }}" readonly>
+              </div>
+              <button type="button" class="btn btn-outline-info btn-sm mb-2" onclick="getLocation()">Use My Current Location</button>
+            <script>
+              function getLocation() {
+                if (navigator.geolocation) {
+                  navigator.geolocation.getCurrentPosition(function(position) {
+                    document.getElementById('latitude').value = position.coords.latitude;
+                    document.getElementById('longitude').value = position.coords.longitude;
+                  }, function(error) {
+                    alert('Unable to retrieve your location.');
+                  });
+                } else {
+                  alert('Geolocation is not supported by your browser.');
+                }
+              }
+            </script>
+              <div class="mb-2">
+                <label for="profile_photo" class="form-label">Profile Photo</label>
+                <input type="file" name="profile_photo" id="profile_photo" class="form-control" accept="image/*" onchange="previewImage(this, 'customerProfilePhotoPreview')">
+                <div class="mt-2">
+                  {% if user.profile_photo %}
+                    <img id="customerProfilePhotoPreview" src="{{ user.profile_photo.url }}" class="img-fluid rounded shadow-sm" style="max-width:120px;max-height:120px;" alt="Profile Photo">
+                  {% else %}
+                    <img id="customerProfilePhotoPreview" style="display:none;max-width:120px;max-height:120px;" alt="Profile Photo">
+                  {% endif %}
+                </div>
+              </div>
+              <div class="mb-2">
+                <label for="id_document" class="form-label">ID Document</label>
+                <input type="file" name="id_document" id="id_document" class="form-control" accept="image/*" onchange="previewImage(this, 'customerIdDocumentPreview')">
+                <div class="mt-2">
+                  {% if user.id_document %}
+                    <img id="customerIdDocumentPreview" src="{{ user.id_document.url }}" class="img-fluid rounded shadow-sm" style="max-width:120px;max-height:120px;" alt="ID Document">
+                  {% else %}
+                    <img id="customerIdDocumentPreview" style="display:none;max-width:120px;max-height:120px;" alt="ID Document">
+                  {% endif %}
+                </div>
+              </div>
+              <button type="submit" class="btn btn-primary btn-sm">Update Profile</button>
+            </form>
+            <script>
+              function previewImage(input, previewId) {
+                const preview = document.getElementById(previewId);
+                if (input.files && input.files[0]) {
+                  const reader = new FileReader();
+                  reader.onload = function(e) {
+                    preview.src = e.target.result;
+                    preview.style.display = 'block';
+                  }
+                  reader.readAsDataURL(input.files[0]);
+                }
+              }
+            </script>
+          {% endif %}
           {% if fundi_profile %}
-            <div class="d-flex align-items-center mb-3">
-              {% if fundi_profile.profile_photo %}
-                <img src="{{ fundi_profile.profile_photo.url }}" class="rounded-circle me-2" style="width:64px;height:64px;object-fit:cover;">
-              {% else %}
-                <div class="profile-avatar me-2">{{ user.first_name.0|default:user.email.0|upper }}</div>
-              {% endif %}
-              {% if fundi_profile.verification_status == 'pending' %}
-                <span class="badge bg-warning">Pending Verification</span>
-              {% elif fundi_profile.verification_status == 'verified' %}
-                <span class="badge bg-success"><i class="bi bi-patch-check-fill"></i> Verified</span>
-              {% elif fundi_profile.verification_status == 'rejected' %}
-                <span class="badge bg-danger">Rejected</span>
-              {% endif %}
-            </div>
-            <a href="{% url 'fundi_verification' %}" class="btn btn-outline-primary mb-3">Verify Fundi Account</a>
             <hr>
             <h5 class="text-success">Fundi Profile</h5>
-            <form method="post" action="" class="mb-3">
+        <div class="mb-3">
+          <strong>Verification Status:</strong>
+          {% if fundi_profile.verification_status == 'approved' %}
+            <span class="badge bg-success">Verified</span>
+          {% elif fundi_profile.verification_status == 'pending' %}
+            <span class="badge bg-warning text-dark">Pending</span>
+          {% elif fundi_profile.verification_status == 'rejected' %}
+            <span class="badge bg-danger">Rejected</span>
+          {% endif %}
+          {% if fundi_profile.verified_at %}
+            <span class="ms-2 text-muted">on {{ fundi_profile.verified_at|date:"M d, Y H:i" }}</span>
+          {% endif %}
+          {% if fundi_profile.verification_comment %}
+            <div class="mt-1 text-muted small">Admin comment: {{ fundi_profile.verification_comment }}</div>
+          {% endif %}
+        </div>
+        <div class="row mb-3">
+          <div class="col-md-6">
+            <strong>Profile Photo:</strong><br>
+            {% if fundi_profile.profile_photo %}
+              <img src="{{ fundi_profile.profile_photo.url }}" class="img-fluid rounded shadow-sm" style="max-width:120px;max-height:120px;" alt="Profile Photo">
+            {% else %}
+              <span class="text-muted">Not uploaded</span>
+            {% endif %}
+          </div>
+          <div class="col-md-6">
+            <strong>ID Document:</strong><br>
+            {% if fundi_profile.id_document %}
+              <img src="{{ fundi_profile.id_document.url }}" class="img-fluid rounded shadow-sm" style="max-width:120px;max-height:120px;" alt="ID Document">
+            {% else %}
+              <span class="text-muted">Not uploaded</span>
+            {% endif %}
+          </div>
+        </div>
+            <form method="post" action="" class="mb-3" enctype="multipart/form-data">
               {% csrf_token %}
               <div class="mb-2">
                 <label for="location" class="form-label">Location</label>
@@ -42,9 +137,44 @@
                 <label for="longitude" class="form-label">Longitude</label>
                 <input type="text" name="longitude" id="longitude" class="form-control" value="{{ fundi_profile.longitude }}" readonly>
               </div>
+              <div class="mb-2">
+                <label for="profile_photo" class="form-label">Profile Photo</label>
+                <input type="file" name="profile_photo" id="profile_photo" class="form-control" accept="image/*" onchange="previewImage(this, 'profilePhotoPreview')">
+                <div class="mt-2">
+                  {% if fundi_profile.profile_photo %}
+                    <img id="profilePhotoPreview" src="{{ fundi_profile.profile_photo.url }}" class="img-fluid rounded shadow-sm" style="max-width:120px;max-height:120px;" alt="Profile Photo">
+                  {% else %}
+                    <img id="profilePhotoPreview" style="display:none;max-width:120px;max-height:120px;" alt="Profile Photo">
+                  {% endif %}
+                </div>
+              </div>
+              <div class="mb-2">
+                <label for="id_document" class="form-label">ID Document</label>
+                <input type="file" name="id_document" id="id_document" class="form-control" accept="image/*" onchange="previewImage(this, 'idDocumentPreview')">
+                <div class="mt-2">
+                  {% if fundi_profile.id_document %}
+                    <img id="idDocumentPreview" src="{{ fundi_profile.id_document.url }}" class="img-fluid rounded shadow-sm" style="max-width:120px;max-height:120px;" alt="ID Document">
+                  {% else %}
+                    <img id="idDocumentPreview" style="display:none;max-width:120px;max-height:120px;" alt="ID Document">
+                  {% endif %}
+                </div>
+              </div>
               <button type="button" class="btn btn-outline-info btn-sm mb-2" onclick="getLocation()">Use My Current Location</button>
-              <button type="submit" class="btn btn-primary btn-sm">Update Location</button>
+              <button type="submit" class="btn btn-primary btn-sm">Update Profile</button>
             </form>
+            <script>
+              function previewImage(input, previewId) {
+                const preview = document.getElementById(previewId);
+                if (input.files && input.files[0]) {
+                  const reader = new FileReader();
+                  reader.onload = function(e) {
+                    preview.src = e.target.result;
+                    preview.style.display = 'block';
+                  }
+                  reader.readAsDataURL(input.files[0]);
+                }
+              }
+            </script>
             <script>
               function getLocation() {
                 if (navigator.geolocation) {
@@ -73,9 +203,6 @@
                 <p class="text-muted">No portfolio images uploaded.</p>
               {% endfor %}
             </div>
-          {% endif %}
-          {% if user.role == 'customer' %}
-            <a href="/users/customer-verification/" class="btn btn-outline-primary mb-3">Verify Customer Account</a>
           {% endif %}
         </div>
       </div>
