@@ -144,6 +144,7 @@ CRISPY_TEMPLATE_PACK = "bootstrap5"
 SITE_ID = 1
 AUTH_USER_MODEL = 'users.User'
 
+
 # Django-allauth settings
 AUTHENTICATION_BACKENDS = [
     'django.contrib.auth.backends.ModelBackend',
@@ -161,6 +162,9 @@ ACCOUNT_LOGOUT_REDIRECT_URL = '/'
 LOGIN_URL = '/accounts/login/'
 LOGIN_REDIRECT_URL = '/'
 LOGOUT_REDIRECT_URL = '/'
+
+# Email backend for development
+EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field

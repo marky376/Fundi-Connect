@@ -2,13 +2,55 @@
 {% block title %}Dashboard | FundiConnect{% endblock %}
 {% block content %}
 <div class="container py-5">
-  <div class="row justify-content-center">
+  <div class="row mb-4">
+    <div class="col-md-4">
+      <div class="card shadow-sm border-0">
+        <div class="card-body text-center">
+          <h5 class="fw-bold text-primary">User Stats</h5>
+          <hr>
+          <p class="mb-1"><strong>Role:</strong> {{ user.role|title }}</p>
+          <p class="mb-1"><strong>Jobs Posted:</strong> {{ user.posted_jobs.count|default:0 }}</p>
+          <p class="mb-1"><strong>Jobs Completed:</strong> {{ user.completed_jobs.count|default:0 }}</p>
+          <p class="mb-1"><strong>Applications:</strong> {{ user.job_applications.count|default:0 }}</p>
+        </div>
+      </div>
+    </div>
     <div class="col-md-8">
-      <div class="card shadow-lg border-0">
-        <div class="card-body p-5 text-center">
-          <h2 class="fw-bold mb-3 text-primary">Welcome to Your Dashboard</h2>
-          <p class="lead text-muted">This is a placeholder dashboard. You can customize this page to show user stats, recent jobs, notifications, and more.</p>
-          <i class="bi bi-bar-chart-line display-4 text-success"></i>
+      <div class="card shadow-sm border-0">
+        <div class="card-body">
+          <h5 class="fw-bold text-success">Notifications</h5>
+          <hr>
+          {% if messages %}
+            <ul class="list-unstyled mb-0">
+              {% for message in messages %}
+                <li class="mb-2"><i class="bi bi-info-circle text-primary me-2"></i>{{ message }}</li>
+              {% endfor %}
+            </ul>
+          {% else %}
+            <p class="text-muted">No new notifications.</p>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="row">
+    <div class="col-12">
+      <div class="card shadow-sm border-0">
+        <div class="card-body">
+          <h5 class="fw-bold text-primary">Recent Jobs</h5>
+          <hr>
+          {% if user.posted_jobs.exists %}
+            <ul class="list-group">
+              {% for job in user.posted_jobs.all|slice:":5" %}
+                <li class="list-group-item d-flex justify-content-between align-items-center">
+                  <span>{{ job.title }}</span>
+                  <span class="badge bg-primary">{{ job.status|title }}</span>
+                </li>
+              {% endfor %}
+            </ul>
+          {% else %}
+            <p class="text-muted">No recent jobs found.</p>
+          {% endif %}
         </div>
       </div>
     </div>

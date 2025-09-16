@@ -1,0 +1,36 @@
+{% extends 'base/base.html' %}
+{% block title %}Profile | FundiConnect{% endblock %}
+{% block content %}
+<div class="container py-5">
+  <div class="row justify-content-center">
+    <div class="col-md-8">
+      <div class="card shadow-lg border-0">
+        <div class="card-body p-5">
+          <h2 class="fw-bold mb-3 text-primary">My Profile</h2>
+          <p class="mb-2"><strong>Name:</strong> {{ user.first_name }} {{ user.last_name }}</p>
+          <p class="mb-2"><strong>Email:</strong> {{ user.email }}</p>
+          <p class="mb-2"><strong>Role:</strong> {{ user.role|title }}</p>
+          {% if fundi_profile %}
+            <hr>
+            <h5 class="text-success">Fundi Profile</h5>
+            <p><strong>Skills:</strong> {{ fundi_profile.skills|join:", " }}</p>
+            <p><strong>Description:</strong> {{ fundi_profile.description }}</p>
+            <p><strong>Experience:</strong> {{ fundi_profile.experience_years }} years</p>
+            <p><strong>Hourly Rate:</strong> KES {{ fundi_profile.hourly_rate }}</p>
+            <h6 class="mt-3">Portfolio Images</h6>
+            <div class="row">
+              {% for image in portfolio_images %}
+                <div class="col-4 mb-2">
+                  <img src="{{ image.image.url }}" class="img-fluid rounded shadow-sm" alt="Portfolio">
+                </div>
+              {% empty %}
+                <p class="text-muted">No portfolio images uploaded.</p>
+              {% endfor %}
+            </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

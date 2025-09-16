@@ -1,3 +1,17 @@
+from django.contrib.auth import authenticate
+
+def custom_login_view(request):
+    if request.method == 'POST':
+        email = request.POST.get('email')
+        password = request.POST.get('password')
+        user = authenticate(request, email=email, password=password)
+        if user is not None:
+            login(request, user)
+            messages.success(request, 'Logged in successfully!')
+            return redirect('dashboard')
+        else:
+            messages.error(request, 'Invalid email or password. Please try again.')
+    return render(request, 'users/login.html')
 from django.shortcuts import render, redirect
 from django.contrib.auth import login
 from django.contrib.auth.decorators import login_required
@@ -72,5 +86,16 @@ def profile_view(request):
     return render(request, 'users/profile.html', context)
 
 
+from .forms import CustomerSignupForm
+
 def customer_signup_view(request):
-    return render(request, 'users/signup.html')
+    if request.method == 'POST':
+        form = CustomerSignupForm(request.POST)
+        if form.is_valid():
+            user = form.save(request)
+            login(request, user)
+            messages.success(request, 'Account created successfully!')
+            return redirect('dashboard')
+    else:
+        form = CustomerSignupForm()
+    return render(request, 'users/signup.html', {'form': form})

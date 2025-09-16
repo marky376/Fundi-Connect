@@ -1,0 +1,36 @@
+{% extends 'base/base.html' %}
+{% block title %}Browse Jobs | FundiConnect{% endblock %}
+{% block content %}
+<div class="container py-5">
+  <h2 class="fw-bold mb-4 text-primary">Available Jobs</h2>
+  <div class="row">
+    {% for job in page_obj %}
+      <div class="col-md-6 col-lg-4 mb-4">
+        <div class="card job-card h-100 border-0 shadow-sm">
+          <div class="card-body">
+            <h5 class="card-title">{{ job.title }}</h5>
+            <p class="card-text text-muted">{{ job.description|truncatewords:15 }}</p>
+            <p class="mb-1"><i class="bi bi-geo-alt me-1"></i>{{ job.location }}</p>
+            <span class="badge bg-primary">{{ job.get_urgency_display }}</span>
+          </div>
+          <div class="card-footer bg-transparent border-0">
+            <a href="{% url 'job_detail' job.id %}" class="btn btn-outline-primary btn-sm w-100">View Details</a>
+          </div>
+        </div>
+      </div>
+    {% empty %}
+      <div class="col-12">
+        <p class="text-muted">No jobs available at the moment.</p>
+      </div>
+    {% endfor %}
+  </div>
+  <div class="text-center mt-4">
+    {% if page_obj.has_previous %}
+      <a href="?page={{ page_obj.previous_page_number }}" class="btn btn-outline-secondary">Previous</a>
+    {% endif %}
+    {% if page_obj.has_next %}
+      <a href="?page={{ page_obj.next_page_number }}" class="btn btn-outline-secondary">Next</a>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}
