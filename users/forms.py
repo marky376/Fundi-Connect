@@ -31,6 +31,15 @@ class CustomerSignupForm(SignupForm):
         return user
 
 
+class FundiVerificationForm(forms.ModelForm):
+    class Meta:
+        model = FundiProfile
+        fields = ['profile_photo', 'id_document']
+        widgets = {
+            'profile_photo': forms.ClearableFileInput(attrs={'class': 'form-control'}),
+            'id_document': forms.ClearableFileInput(attrs={'class': 'form-control'}),
+        }
+
 class FundiOnboardingForm(forms.Form):
     location = forms.CharField(
         max_length=100,

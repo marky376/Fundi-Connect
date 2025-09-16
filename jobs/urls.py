@@ -17,4 +17,9 @@ urlpatterns = [
     path('apply/<int:job_id>/', views.apply, name='apply'),
     path('<int:job_id>/messages/<int:fundi_id>/', views.job_messages, name='job_messages'),
     path('<int:job_id>/accept/<int:application_id>/', views.accept_application, name='accept_application'),
+    path('<int:job_id>/start/', views.start_job, name='start_job'),
+    path('<int:job_id>/request-completion/', views.request_completion, name='request_completion'),
+    path('<int:job_id>/complete/', views.complete_job, name='complete_job'),
+    path('<int:job_id>/cancel/', views.cancel_job, name='cancel_job'),
+    path('<int:job_id>/pay/', views.initiate_payment, name='initiate_payment'),
 ]

@@ -10,7 +10,11 @@
           {% for app in page_obj.object_list %}
             <li class="list-group-item d-flex justify-content-between align-items-center">
               <div>
-                <strong>{{ app.job.title }}</strong><br>
+                <strong>{{ app.job.title }}
+                  {% if app.fundi.fundi_profile and app.fundi.fundi_profile.verification_status == 'verified' %}
+                    <i class="bi bi-patch-check-fill text-success" title="Verified"></i>
+                  {% endif %}
+                </strong><br>
                 <span class="text-muted">{{ app.job.location }}</span>
               </div>
               <span class="badge bg-info">{{ app.status|title }}</span>

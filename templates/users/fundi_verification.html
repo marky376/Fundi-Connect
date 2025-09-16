@@ -1,0 +1,25 @@
+{% extends 'base/base.html' %}
+{% block content %}
+<div class="container mt-5">
+    <h2 class="mb-4">Fundi Verification</h2>
+    <form method="post" enctype="multipart/form-data" class="card p-4 shadow-lg">
+        {% csrf_token %}
+        <div class="mb-3">
+            <label for="id_profile_photo" class="form-label">Profile Photo</label>
+            {{ form.profile_photo }}
+        </div>
+        <div class="mb-3">
+            <label for="id_id_document" class="form-label">ID Document (National ID or Passport)</label>
+            {{ form.id_document }}
+        </div>
+        <button type="submit" class="btn btn-primary w-100">Submit for Verification</button>
+    </form>
+    {% if fundi_profile.verification_status == 'pending' %}
+        <div class="alert alert-warning mt-3">Your verification is pending admin approval.</div>
+    {% elif fundi_profile.verification_status == 'verified' %}
+        <div class="alert alert-success mt-3">You are verified! <i class="bi bi-patch-check-fill text-success"></i></div>
+    {% elif fundi_profile.verification_status == 'rejected' %}
+        <div class="alert alert-danger mt-3">Verification rejected. {{ fundi_profile.verification_comment }}</div>
+    {% endif %}
+</div>
+{% endblock %}

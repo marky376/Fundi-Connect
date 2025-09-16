@@ -38,12 +38,24 @@ class UserAdmin(BaseUserAdmin):
 
 
 class FundiProfileAdmin(admin.ModelAdmin):
-    list_display = ('user', 'availability', 'rating', 'total_jobs_completed', 'hourly_rate')
-    list_filter = ('availability', 'rating', 'experience_years')
+    list_display = ('user', 'availability', 'rating', 'total_jobs_completed', 'hourly_rate', 'verification_status')
+    list_filter = ('availability', 'rating', 'experience_years', 'verification_status')
     search_fields = ('user__email', 'user__first_name', 'user__last_name', 'skills')
     readonly_fields = ('rating', 'total_jobs_completed')
-    
     inlines = [PortfolioImageInline]
+
+    actions = ['approve_verification', 'reject_verification']
+
+    def approve_verification(self, request, queryset):
+        updated = queryset.update(verification_status='verified', verification_comment='')
+        self.message_user(request, f"{updated} fundi(s) marked as verified.")
+
+    def reject_verification(self, request, queryset):
+        updated = queryset.update(verification_status='rejected', verification_comment='Rejected by admin.')
+        self.message_user(request, f"{updated} fundi(s) marked as rejected.")
+
+    approve_verification.short_description = "Approve selected fundi verifications"
+    reject_verification.short_description = "Reject selected fundi verifications"
 
 
 class PortfolioImageAdmin(admin.ModelAdmin):

@@ -1,6 +1,47 @@
+from django.contrib.auth.decorators import login_required
+from .forms import PaymentForm
+from .models import Payment
+
+@login_required
+def initiate_payment(request, job_id):
+    job = get_object_or_404(Job, id=job_id)
+    # Only job customer can pay
+    if request.user != job.customer:
+        messages.error(request, 'You are not authorized to pay for this job.')
+        return redirect('jobs:job_detail_jobs', job_id=job_id)
+    if request.method == 'POST':
+        form = PaymentForm(request.POST)
+        if form.is_valid():
+            payment = form.save(commit=False)
+            payment.job = job
+            payment.customer = request.user
+            payment.status = 'initiated'
+            # Integrate MpesaAPI mock
+            from .mpesa_api import MpesaAPI
+            mpesa = MpesaAPI()
+            response = mpesa.initiate_stk_push(
+                phone_number=payment.phone_number,
+                amount=payment.amount,
+                account_reference=str(job.id),
+                transaction_desc=f'Payment for job {job.title}'
+            )
+            if response.get('ResponseCode') == '0':
+                payment.status = 'pending'
+                payment.mpesa_receipt = response.get('CheckoutRequestID', '')
+                payment.save()
+                messages.success(request, response.get('CustomerMessage', 'Payment initiated.'))
+            else:
+                payment.status = 'failed'
+                payment.save()
+                messages.error(request, 'Mpesa payment failed. Please try again.')
+            return redirect('jobs:job_detail_jobs', job_id=job_id)
+    else:
+        form = PaymentForm()
+    return render(request, 'jobs/payment_initiate.html', {'form': form, 'job': job})
 
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.http import require_POST
+from users.models import Notification
 
 @login_required
 @require_POST
@@ -63,6 +104,78 @@ def job_messages(request, job_id, fundi_id):
     })
 from .models import Job, JobApplication, Category, JobImage
 from .forms import JobForm, JobApplicationForm
+
+from django.views.decorators.http import require_POST
+
+# Job status update actions
+@login_required
+@require_POST
+def start_job(request, job_id):
+    job = get_object_or_404(Job, id=job_id)
+    # Only accepted fundi can start job
+    if request.user != job.fundi or job.status != 'open':
+        messages.error(request, 'You are not authorized to start this job.')
+        return redirect('jobs:job_detail_jobs', job_id=job_id)
+    job.status = 'in_progress'
+    job.save()
+    messages.success(request, 'Job started!')
+    Notification.objects.create(
+        user=job.customer,
+        message=f"Fundi {request.user.get_full_name() or request.user.email} started your job '{job.title}'."
+    )
+    return redirect('jobs:job_detail_jobs', job_id=job_id)
+
+@login_required
+@require_POST
+def request_completion(request, job_id):
+    job = get_object_or_404(Job, id=job_id)
+    # Only fundi can request completion when job is in progress
+    if request.user != job.fundi or job.status != 'in_progress':
+        messages.error(request, 'You are not authorized to request completion for this job.')
+        return redirect('jobs:job_detail_jobs', job_id=job_id)
+    job.status = 'completion_requested'
+    job.save()
+    messages.success(request, 'Completion requested!')
+    Notification.objects.create(
+        user=job.customer,
+        message=f"Fundi {request.user.get_full_name() or request.user.email} requested completion for job '{job.title}'."
+    )
+    return redirect('jobs:job_detail_jobs', job_id=job_id)
+
+@login_required
+@require_POST
+def complete_job(request, job_id):
+    job = get_object_or_404(Job, id=job_id)
+    # Only customer can mark job as completed after completion requested
+    if request.user != job.customer or job.status != 'completion_requested':
+        messages.error(request, 'You are not authorized to complete this job.')
+        return redirect('jobs:job_detail_jobs', job_id=job_id)
+    job.status = 'completed'
+    job.save()
+    messages.success(request, 'Job marked as completed!')
+    Notification.objects.create(
+        user=job.fundi,
+        message=f"Customer {request.user.get_full_name() or request.user.email} marked job '{job.title}' as completed."
+    )
+    return redirect('jobs:job_detail_jobs', job_id=job_id)
+
+@login_required
+@require_POST
+def cancel_job(request, job_id):
+    job = get_object_or_404(Job, id=job_id)
+    # Only customer can cancel job if not completed
+    if request.user != job.customer or job.status == 'completed':
+        messages.error(request, 'You are not authorized to cancel this job.')
+        return redirect('jobs:job_detail_jobs', job_id=job_id)
+    job.status = 'cancelled'
+    job.save()
+    messages.success(request, 'Job cancelled!')
+    if job.fundi:
+        Notification.objects.create(
+            user=job.fundi,
+            message=f"Customer {request.user.get_full_name() or request.user.email} cancelled job '{job.title}'."
+        )
+    return redirect('jobs:job_detail_jobs', job_id=job_id)
 
 # Fundi applies for a job
 @login_required

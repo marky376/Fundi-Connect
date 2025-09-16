@@ -1,0 +1,24 @@
+{% extends 'base/base.html' %}
+{% block content %}
+<div class="container mt-4">
+  <h2>Pay for Job: {{ job.title }}</h2>
+  <form method="post">
+    {% csrf_token %}
+    <div class="mb-3">
+      {{ form.amount.label_tag }}
+      {{ form.amount }}
+      {% if form.amount.errors %}
+        <div class="text-danger">{{ form.amount.errors }}</div>
+      {% endif %}
+    </div>
+    <div class="mb-3">
+      {{ form.phone_number.label_tag }}
+      {{ form.phone_number }}
+      {% if form.phone_number.errors %}
+        <div class="text-danger">{{ form.phone_number.errors }}</div>
+      {% endif %}
+    </div>
+    <button type="submit" class="btn btn-success">Pay with Mpesa</button>
+  </form>
+</div>
+{% endblock %}

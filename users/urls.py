@@ -8,4 +8,5 @@ urlpatterns = [
     path('signup/', views.FundiSignupView.as_view(), name='signup'),
     path('login/', views.custom_login_view, name='login'),
     path('login/customer/', views.customer_login_view, name='customer_login'),
+    path('fundi-verification/', views.fundi_verification, name='fundi_verification'),
 ]

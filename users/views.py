@@ -32,7 +32,25 @@ from django.contrib import messages
 from django.http import JsonResponse
 from allauth.account.views import SignupView
 from .models import User, FundiProfile, PortfolioImage
-from .forms import FundiSignupForm, FundiOnboardingForm
+from .forms import FundiSignupForm, FundiOnboardingForm, FundiVerificationForm
+
+# Fundi verification view
+@login_required
+def fundi_verification(request):
+    if request.user.role != 'fundi':
+        return redirect('dashboard')
+    fundi_profile, created = FundiProfile.objects.get_or_create(user=request.user)
+    if request.method == 'POST':
+        form = FundiVerificationForm(request.POST, request.FILES, instance=fundi_profile)
+        if form.is_valid():
+            fundi_profile.verification_status = 'pending'
+            fundi_profile.save()
+            form.save()
+            messages.success(request, 'Verification documents submitted! Await admin approval.')
+            return redirect('profile')
+    else:
+        form = FundiVerificationForm(instance=fundi_profile)
+    return render(request, 'users/fundi_verification.html', {'form': form, 'fundi_profile': fundi_profile})
 import json
 
 

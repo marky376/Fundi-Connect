@@ -56,6 +56,10 @@ class FundiProfile(models.Model):
     total_jobs_completed = models.PositiveIntegerField(default=0)
     latitude = models.DecimalField(max_digits=9, decimal_places=6, null=True, blank=True)
     longitude = models.DecimalField(max_digits=9, decimal_places=6, null=True, blank=True)
+    profile_photo = models.ImageField(upload_to='fundi_photos/', null=True, blank=True)
+    id_document = models.ImageField(upload_to='fundi_ids/', null=True, blank=True)
+    verification_status = models.CharField(max_length=20, choices=[('pending', 'Pending'), ('verified', 'Verified'), ('rejected', 'Rejected')], default='pending')
+    verification_comment = models.TextField(blank=True)
     
     def __str__(self):
         return f"{self.user.email} - Fundi Profile"

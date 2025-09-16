@@ -11,7 +11,33 @@
                         <small>{{ job.created_at|date:"M d, Y" }}</small>
                     </div>
                     <p class="mb-1">{{ job.description|truncatewords:20 }}</p>
-                    <small>Status: <span class="badge bg-info">{{ job.status }}</span></small>
+                    <small>Status:
+                        {% if job.status == 'open' %}
+                            <span class="badge bg-info">Open</span>
+                        {% elif job.status == 'in_progress' %}
+                            <span class="badge bg-warning text-dark">In Progress</span>
+                        {% elif job.status == 'completion_requested' %}
+                            <span class="badge bg-primary">Completion Requested</span>
+                        {% elif job.status == 'completed' %}
+                            <span class="badge bg-success">Completed</span>
+                        {% elif job.status == 'cancelled' %}
+                            <span class="badge bg-danger">Cancelled</span>
+                        {% endif %}
+                    </small>
+                    <!-- Progress Bar -->
+                    <div class="progress mt-2" style="height: 10px;">
+                        {% if job.status == 'open' %}
+                            <div class="progress-bar bg-info" style="width: 20%;"></div>
+                        {% elif job.status == 'in_progress' %}
+                            <div class="progress-bar bg-warning text-dark" style="width: 50%;"></div>
+                        {% elif job.status == 'completion_requested' %}
+                            <div class="progress-bar bg-primary" style="width: 80%;"></div>
+                        {% elif job.status == 'completed' %}
+                            <div class="progress-bar bg-success" style="width: 100%;"></div>
+                        {% elif job.status == 'cancelled' %}
+                            <div class="progress-bar bg-danger" style="width: 100%;"></div>
+                        {% endif %}
+                    </div>
                 </a>
             {% endfor %}
         </div>

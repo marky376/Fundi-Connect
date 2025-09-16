@@ -210,8 +210,17 @@
                     {% if user.is_authenticated %}
                         <li class="nav-item dropdown">
                             <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown">
-                                <div class="profile-avatar me-2">
+                                <div class="profile-avatar me-2 position-relative">
                                     {{ user.first_name.0|default:user.email.0|upper }}
+                                    {% if user.role == 'fundi' and fundi_profile and fundi_profile.verification_status == 'pending' %}
+                                        <span class="position-absolute top-0 start-100 translate-middle p-1 bg-warning border border-light rounded-circle">
+                                            <span class="visually-hidden">Pending Verification</span>
+                                        </span>
+                                    {% elif user.role == 'fundi' and fundi_profile and fundi_profile.verification_status == 'rejected' %}
+                                        <span class="position-absolute top-0 start-100 translate-middle p-1 bg-danger border border-light rounded-circle">
+                                            <span class="visually-hidden">Verification Rejected</span>
+                                        </span>
+                                    {% endif %}
                                 </div>
                                 {{ user.first_name|default:user.email }}
                                 {% if user.role == 'fundi' and user.is_verified %}

@@ -1,3 +1,26 @@
+                    <!-- Payment Status -->
+                    {% if user == job.customer %}
+                        {% with payment=job.payments.last %}
+                            <div class="mb-3">
+                                <strong>Payment Status:</strong>
+                                {% if payment %}
+                                    <span class="badge bg-secondary">{{ payment.status|title }}</span>
+                                    {% if payment.status == 'pending' %}
+                                        <span class="text-info ms-2">Awaiting Mpesa confirmation</span>
+                                    {% elif payment.status == 'completed' %}
+                                        <span class="text-success ms-2">Payment completed</span>
+                                    {% elif payment.status == 'failed' %}
+                                        <span class="text-danger ms-2">Payment failed</span>
+                                    {% endif %}
+                                    <br>
+                                    <small>Amount: {{ payment.amount }} KES | Phone: {{ payment.phone_number }}</small>
+                                {% else %}
+                                    <span class="text-warning">No payment initiated.</span>
+                                {% endif %}
+                                <a href="{% url 'jobs:initiate_payment' job.id %}" class="btn btn-success btn-sm mt-2">Pay with Mpesa</a>
+                            </div>
+                        {% endwith %}
+                    {% endif %}
 {% extends 'base/base.html' %}
 {% block title %}Job Details{% endblock %}
 {% block content %}
@@ -10,7 +33,58 @@
                     <p class="mb-2"><strong>Category:</strong> {{ job.category.name }}</p>
                     <p class="mb-2"><strong>Description:</strong> {{ job.description }}</p>
                     <p class="mb-2"><strong>Location:</strong> {{ job.location }}</p>
-                    <p class="mb-2"><strong>Status:</strong> <span class="badge bg-info">{{ job.status }}</span></p>
+                    <p class="mb-2"><strong>Status:</strong>
+                        {% if job.status == 'open' %}
+                            <span class="badge bg-info">Open</span>
+                        {% elif job.status == 'in_progress' %}
+                            <span class="badge bg-warning text-dark">In Progress</span>
+                        {% elif job.status == 'completion_requested' %}
+                            <span class="badge bg-primary">Completion Requested</span>
+                        {% elif job.status == 'completed' %}
+                            <span class="badge bg-success">Completed</span>
+                        {% elif job.status == 'cancelled' %}
+                            <span class="badge bg-danger">Cancelled</span>
+                        {% endif %}
+                    </p>
+                    <!-- Progress Bar -->
+                    <div class="progress mb-3" style="height: 20px;">
+                        {% if job.status == 'open' %}
+                            <div class="progress-bar bg-info" style="width: 20%;">Open</div>
+                        {% elif job.status == 'in_progress' %}
+                            <div class="progress-bar bg-warning text-dark" style="width: 50%;">In Progress</div>
+                        {% elif job.status == 'completion_requested' %}
+                            <div class="progress-bar bg-primary" style="width: 80%;">Completion Requested</div>
+                        {% elif job.status == 'completed' %}
+                            <div class="progress-bar bg-success" style="width: 100%;">Completed</div>
+                        {% elif job.status == 'cancelled' %}
+                            <div class="progress-bar bg-danger" style="width: 100%;">Cancelled</div>
+                        {% endif %}
+                    </div>
+                    <!-- Job Status Actions -->
+                    {% if user.is_authenticated %}
+                        {% if user == job.fundi and job.status == 'open' %}
+                            <form method="post" action="{% url 'jobs:start_job' job.id %}">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-warning w-100 mb-2">Start Job</button>
+                            </form>
+                        {% elif user == job.fundi and job.status == 'in_progress' %}
+                            <form method="post" action="{% url 'jobs:request_completion' job.id %}">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-primary w-100 mb-2">Request Completion</button>
+                            </form>
+                        {% elif user == job.customer and job.status == 'completion_requested' %}
+                            <form method="post" action="{% url 'jobs:complete_job' job.id %}">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-success w-100 mb-2">Mark as Completed</button>
+                            </form>
+                        {% endif %}
+                        {% if user == job.customer and job.status != 'completed' and job.status != 'cancelled' %}
+                            <form method="post" action="{% url 'jobs:cancel_job' job.id %}">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-danger w-100 mb-2">Cancel Job</button>
+                            </form>
+                        {% endif %}
+                    {% endif %}
                     <p class="mb-2"><strong>Urgency:</strong> {{ job.get_urgency_display }}</p>
                     <p class="mb-2"><strong>Budget:</strong> KES {{ job.budget_min }} - {{ job.budget_max }}</p>
                     <p class="mb-2"><strong>Deadline:</strong> {{ job.deadline|date:"M d, Y H:i" }}</p>
@@ -38,7 +112,11 @@
                             <ul class="list-group mb-3">
                                 {% for application in applicants %}
                                     <li class="list-group-item">
-                                        <strong>{{ application.fundi.get_full_name|default:application.fundi.email }}</strong>
+                                        <strong>{{ application.fundi.get_full_name|default:application.fundi.email }}
+                                            {% if application.fundi.fundi_profile and application.fundi.fundi_profile.verification_status == 'verified' %}
+                                                <i class="bi bi-patch-check-fill text-success" title="Verified"></i>
+                                            {% endif %}
+                                        </strong>
                                         <span class="badge bg-secondary ms-2">{{ application.status|capfirst }}</span>
                                         <br>
                                         <small>Applied on {{ application.created_at|date:"M d, Y H:i" }}</small>
