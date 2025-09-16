@@ -1,0 +1,41 @@
+{% extends 'base/base.html' %}
+{% block title %}My Applications{% endblock %}
+{% block content %}
+<section class="container py-5">
+  <h2 class="fw-bold text-primary mb-4">My Job Applications</h2>
+  <div class="card shadow-lg">
+    <div class="card-body">
+      {% if page_obj.object_list %}
+        <ul class="list-group">
+          {% for app in page_obj.object_list %}
+            <li class="list-group-item d-flex justify-content-between align-items-center">
+              <div>
+                <strong>{{ app.job.title }}</strong><br>
+                <span class="text-muted">{{ app.job.location }}</span>
+              </div>
+              <span class="badge bg-info">{{ app.status|title }}</span>
+              <a href="{% url 'jobs:job_detail_jobs' app.job.id %}" class="btn btn-outline-primary btn-sm ms-2">View Job</a>
+              {% if app.status == 'accepted' %}
+                <a href="{% url 'jobs:job_messages' app.job.id app.fundi.id %}" class="btn btn-primary btn-sm ms-2">Message Customer</a>
+              {% endif %}
+            </li>
+          {% endfor %}
+        </ul>
+        <nav class="mt-4">
+          <ul class="pagination justify-content-center">
+            {% if page_obj.has_previous %}
+              <li class="page-item"><a class="page-link" href="?page={{ page_obj.previous_page_number }}">Previous</a></li>
+            {% endif %}
+            <li class="page-item disabled"><span class="page-link">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span></li>
+            {% if page_obj.has_next %}
+              <li class="page-item"><a class="page-link" href="?page={{ page_obj.next_page_number }}">Next</a></li>
+            {% endif %}
+          </ul>
+        </nav>
+      {% else %}
+        <p class="text-muted">You have not applied for any jobs yet.</p>
+      {% endif %}
+    </div>
+  </div>
+</section>
+{% endblock %}

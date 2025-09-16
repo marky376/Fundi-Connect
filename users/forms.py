@@ -34,11 +34,17 @@ class CustomerSignupForm(SignupForm):
 class FundiOnboardingForm(forms.Form):
     location = forms.CharField(
         max_length=100,
+        required=True,
         widget=forms.TextInput(attrs={
             'class': 'form-control',
             'placeholder': 'e.g., Nairobi, Westlands'
         })
     )
+    def clean_location(self):
+        location = self.cleaned_data['location']
+        if not location.strip():
+            raise forms.ValidationError('Location is required.')
+        return location
     
     skills = forms.CharField(
         widget=forms.TextInput(attrs={

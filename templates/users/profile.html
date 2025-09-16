@@ -13,6 +13,37 @@
           {% if fundi_profile %}
             <hr>
             <h5 class="text-success">Fundi Profile</h5>
+            <form method="post" action="" class="mb-3">
+              {% csrf_token %}
+              <div class="mb-2">
+                <label for="location" class="form-label">Location</label>
+                <input type="text" name="location" id="location" class="form-control" value="{{ user.location }}" required>
+              </div>
+              <div class="mb-2">
+                <label for="latitude" class="form-label">Latitude</label>
+                <input type="text" name="latitude" id="latitude" class="form-control" value="{{ fundi_profile.latitude }}" readonly>
+              </div>
+              <div class="mb-2">
+                <label for="longitude" class="form-label">Longitude</label>
+                <input type="text" name="longitude" id="longitude" class="form-control" value="{{ fundi_profile.longitude }}" readonly>
+              </div>
+              <button type="button" class="btn btn-outline-info btn-sm mb-2" onclick="getLocation()">Use My Current Location</button>
+              <button type="submit" class="btn btn-primary btn-sm">Update Location</button>
+            </form>
+            <script>
+              function getLocation() {
+                if (navigator.geolocation) {
+                  navigator.geolocation.getCurrentPosition(function(position) {
+                    document.getElementById('latitude').value = position.coords.latitude;
+                    document.getElementById('longitude').value = position.coords.longitude;
+                  }, function(error) {
+                    alert('Unable to retrieve your location.');
+                  });
+                } else {
+                  alert('Geolocation is not supported by your browser.');
+                }
+              }
+            </script>
             <p><strong>Skills:</strong> {{ fundi_profile.skills|join:", " }}</p>
             <p><strong>Description:</strong> {{ fundi_profile.description }}</p>
             <p><strong>Experience:</strong> {{ fundi_profile.experience_years }} years</p>

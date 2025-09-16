@@ -1,3 +1,15 @@
+from users.models import User
+from django.db import models
+class Message(models.Model):
+    job = models.ForeignKey('Job', on_delete=models.CASCADE, related_name='messages')
+    sender = models.ForeignKey(User, on_delete=models.CASCADE, related_name='sent_messages')
+    recipient = models.ForeignKey(User, on_delete=models.CASCADE, related_name='received_messages')
+    content = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+    is_read = models.BooleanField(default=False)
+
+    def __str__(self):
+        return f"Message from {self.sender.email} to {self.recipient.email} for job {self.job.title}" 
 from django.db import models
 from users.models import User
 
@@ -42,6 +54,8 @@ class Job(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     deadline = models.DateTimeField(null=True, blank=True)
+    rating = models.PositiveSmallIntegerField(null=True, blank=True)  # 1-5 stars
+    customer_review_text = models.TextField(blank=True)  # Optional written review
     
     class Meta:
         ordering = ['-created_at']

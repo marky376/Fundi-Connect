@@ -1,0 +1,23 @@
+{% extends 'base/base.html' %}
+{% block content %}
+<div class="container mt-4">
+    <h2>Job Details</h2>
+    {% if job %}
+        <div class="card mb-3">
+            <div class="card-body">
+                <h4 class="card-title">{{ job.title }}</h4>
+                <p class="card-text"><strong>Category:</strong> {{ job.category }}</p>
+                <p class="card-text"><strong>Description:</strong> {{ job.description }}</p>
+                <p class="card-text"><strong>Location:</strong> {{ job.location }}</p>
+                <p class="card-text"><strong>Posted by:</strong> {{ job.customer.email }}</p>
+                <p class="card-text"><strong>Date Posted:</strong> {{ job.created_at|date:'M d, Y H:i' }}</p>
+            </div>
+        </div>
+        {% if user.is_authenticated and user.role == 'fundi' %}
+            <a href="{% url 'jobs:apply' job.id %}" class="btn btn-primary">Apply for this Job</a>
+        {% endif %}
+    {% else %}
+        <p>Job not found.</p>
+    {% endif %}
+</div>
+{% endblock %}

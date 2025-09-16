@@ -12,6 +12,19 @@ def custom_login_view(request):
         else:
             messages.error(request, 'Invalid email or password. Please try again.')
     return render(request, 'users/login.html')
+
+def customer_login_view(request):
+    if request.method == 'POST':
+        email = request.POST.get('email')
+        password = request.POST.get('password')
+        user = authenticate(request, email=email, password=password)
+        if user is not None and getattr(user, 'role', None) == 'customer':
+            login(request, user)
+            messages.success(request, 'Logged in successfully as customer!')
+            return redirect('dashboard')
+        else:
+            messages.error(request, 'Invalid email or password for customer. Please try again.')
+    return render(request, 'users/customer_login.html')
 from django.shortcuts import render, redirect
 from django.contrib.auth import login
 from django.contrib.auth.decorators import login_required
@@ -83,6 +96,30 @@ def profile_view(request):
             context['portfolio_images'] = request.user.fundi_profile.portfolio_images.all()
         except FundiProfile.DoesNotExist:
             context['fundi_profile'] = None
+        # Handle location update
+        if request.method == 'POST' and 'location' in request.POST:
+            location = request.POST.get('location', '').strip()
+            latitude = request.POST.get('latitude', '').strip()
+            longitude = request.POST.get('longitude', '').strip()
+            updated = False
+            if location:
+                request.user.location = location
+                request.user.save()
+                updated = True
+            else:
+                messages.error(request, 'Location cannot be empty.')
+            # Update latitude/longitude if provided
+            if latitude and longitude and context['fundi_profile']:
+                try:
+                    context['fundi_profile'].latitude = float(latitude)
+                    context['fundi_profile'].longitude = float(longitude)
+                    context['fundi_profile'].save()
+                    updated = True
+                except ValueError:
+                    messages.error(request, 'Invalid latitude/longitude values.')
+            if updated:
+                messages.success(request, 'Location and coordinates updated successfully!')
+                return redirect('profile')
     return render(request, 'users/profile.html', context)
 
 
@@ -93,9 +130,11 @@ def customer_signup_view(request):
         form = CustomerSignupForm(request.POST)
         if form.is_valid():
             user = form.save(request)
+            from django.contrib.auth import BACKEND_SESSION_KEY
+            user.backend = 'django.contrib.auth.backends.ModelBackend'
             login(request, user)
             messages.success(request, 'Account created successfully!')
             return redirect('dashboard')
     else:
         form = CustomerSignupForm()
-    return render(request, 'users/signup.html', {'form': form})
+    return render(request, 'users/customer_signup.html', {'form': form})

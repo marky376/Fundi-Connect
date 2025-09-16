@@ -1,3 +1,26 @@
+from django.http import JsonResponse
+# API endpoint for live fundi locations
+def fundi_locations_api(request):
+    skill_filter = request.GET.get('skill')
+    available_filter = request.GET.get('available')
+    fundis = User.objects.filter(role='fundi', fundi_profile__latitude__isnull=False, fundi_profile__longitude__isnull=False)
+    if skill_filter:
+        fundis = fundis.filter(fundi_profile__skills__icontains=skill_filter)
+    if available_filter == 'true':
+        fundis = fundis.filter(fundi_profile__availability=True)
+    data = []
+    for fundi in fundis:
+        fp = fundi.fundi_profile
+        data.append({
+            'id': fundi.id,
+            'name': f'{fundi.first_name} {fundi.last_name}',
+            'latitude': float(fp.latitude),
+            'longitude': float(fp.longitude),
+            'skills': fp.skills,
+            'location': fundi.location,
+            'available': fp.availability,
+        })
+    return JsonResponse({'fundis': data})
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
@@ -28,9 +51,14 @@ def dashboard(request):
         # Customer dashboard - show their posted jobs and available fundis
         user_jobs = request.user.posted_jobs.all().order_by('-created_at')[:5]
         available_jobs = Job.objects.filter(status='open').order_by('-created_at')[:6]
+        fundis = User.objects.filter(role='fundi', location__isnull=False).exclude(location='').select_related('fundi_profile')
+        from users.models import Notification
+        notifications = Notification.objects.filter(user=request.user).order_by('-created_at')[:10]
         return render(request, 'core/customer_dashboard.html', {
             'user_jobs': user_jobs,
-            'available_jobs': available_jobs
+            'available_jobs': available_jobs,
+            'fundis': fundis,
+            'notifications': notifications
         })
     
     elif request.user.role == 'fundi':

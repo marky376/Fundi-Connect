@@ -1,0 +1,67 @@
+{% extends 'base/base.html' %}
+{% block title %}Job Details{% endblock %}
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow-lg">
+                <div class="card-body p-5">
+                    <h2 class="fw-bold text-primary mb-4">{{ job.title }}</h2>
+                    <p class="mb-2"><strong>Category:</strong> {{ job.category.name }}</p>
+                    <p class="mb-2"><strong>Description:</strong> {{ job.description }}</p>
+                    <p class="mb-2"><strong>Location:</strong> {{ job.location }}</p>
+                    <p class="mb-2"><strong>Status:</strong> <span class="badge bg-info">{{ job.status }}</span></p>
+                    <p class="mb-2"><strong>Urgency:</strong> {{ job.get_urgency_display }}</p>
+                    <p class="mb-2"><strong>Budget:</strong> KES {{ job.budget_min }} - {{ job.budget_max }}</p>
+                    <p class="mb-2"><strong>Deadline:</strong> {{ job.deadline|date:"M d, Y H:i" }}</p>
+                    <p class="mb-2"><strong>Posted by:</strong> {{ job.customer.email }}</p>
+                    <p class="mb-2"><strong>Created at:</strong> {{ job.created_at|date:"M d, Y H:i" }}</p>
+                    {% if job.images.all %}
+                        <div class="mb-3">
+                            <strong>Images:</strong>
+                            <div class="row">
+                                {% for image in job.images.all %}
+                                    <div class="col-4 mb-2">
+                                        <img src="{{ image.image.url }}" class="img-fluid rounded" alt="Job Image">
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    {% endif %}
+                    {% if user.is_authenticated and user.role == 'fundi' and job.status == 'open' %}
+                        <a href="{% url 'jobs:apply' job.id %}" class="btn btn-success w-100 mt-3">Apply for this Job</a>
+                    {% endif %}
+                    {% if user.is_authenticated and user.role == 'customer' and job.customer == user %}
+                        <hr>
+                        <h4 class="mt-4">Applicants</h4>
+                        {% if applicants %}
+                            <ul class="list-group mb-3">
+                                {% for application in applicants %}
+                                    <li class="list-group-item">
+                                        <strong>{{ application.fundi.get_full_name|default:application.fundi.email }}</strong>
+                                        <span class="badge bg-secondary ms-2">{{ application.status|capfirst }}</span>
+                                        <br>
+                                        <small>Applied on {{ application.created_at|date:"M d, Y H:i" }}</small>
+                                        {% if application.message %}<br><em>{{ application.message }}</em>{% endif %}
+                                        {% if application.proposed_rate %}<br>Proposed Rate: KES {{ application.proposed_rate }}{% endif %}
+                                        {% if application.status == 'pending' %}
+                                            <form method="post" action="{% url 'jobs:accept_application' job.id application.id %}" style="display:inline;">
+                                                {% csrf_token %}
+                                                <button type="submit" class="btn btn-success btn-sm mt-2">Accept</button>
+                                            </form>
+                                        {% elif application.status == 'accepted' %}
+                                            <a href="{% url 'jobs:job_messages' job.id application.fundi.id %}" class="btn btn-outline-primary btn-sm mt-2">Message Fundi</a>
+                                        {% endif %}
+                                    </li>
+                                {% endfor %}
+                            </ul>
+                        {% else %}
+                            <p class="text-muted">No fundis have applied yet.</p>
+                        {% endif %}
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,42 @@
+{% extends 'base/base.html' %}
+{% block content %}
+<div class="container mt-4">
+  <h2>Messages with {{ fundi.get_full_name|default:fundi.username }}</h2>
+  <div class="card mb-3">
+    <div class="card-header">Conversation for Job: {{ job.title }}</div>
+    <div class="card-body" style="max-height:400px; overflow-y:auto;">
+      {% if messages %}
+        {% for message in messages %}
+          <div class="mb-2 d-flex {% if message.sender == job.customer %}justify-content-start{% else %}justify-content-end{% endif %}">
+            <div class="p-2 rounded shadow-sm"
+                 style="max-width:70%;
+                        {% if message.sender == job.customer %}background:#f1f1f1; color:#222; margin-right:auto;{% else %}background:#007bff; color:#fff; margin-left:auto;{% endif %}">
+              <strong>{{ message.sender.get_full_name|default:message.sender.username }}</strong><br>
+              <span>{{ message.content }}</span>
+              <small class="text-muted d-block text-end">{{ message.created_at|date:'M d, H:i' }}</small>
+            </div>
+          </div>
+        {% endfor %}
+      {% else %}
+        <p>No messages yet.</p>
+      {% endif %}
+    </div>
+  </div>
+  {% if user == job.customer or user == fundi %}
+    {% if job.status == 'completed' and job.rating %}
+      <div class="alert alert-warning">Messaging is closed. The job is completed and rated.</div>
+    {% else %}
+      <form method="post" class="mb-3">
+        {% csrf_token %}
+        <div class="input-group">
+          <input type="text" name="content" class="form-control" placeholder="Type your message..." required>
+          <button class="btn btn-primary" type="submit">Send</button>
+        </div>
+      </form>
+    {% endif %}
+  {% else %}
+    <div class="alert alert-info">Only the customer and accepted fundi can send messages.</div>
+  {% endif %}
+  <a href="{% url 'jobs:job_detail_jobs' job.id %}" class="btn btn-secondary">Back to Job Detail</a>
+</div>
+{% endblock %}

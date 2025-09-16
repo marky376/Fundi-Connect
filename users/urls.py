@@ -7,4 +7,5 @@ urlpatterns = [
     path('signup/customer/', views.customer_signup_view, name='customer_signup'),
     path('signup/', views.FundiSignupView.as_view(), name='signup'),
     path('login/', views.custom_login_view, name='login'),
+    path('login/customer/', views.customer_login_view, name='customer_login'),
 ]

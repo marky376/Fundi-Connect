@@ -13,6 +13,10 @@
     <script src="https://unpkg.com/htmx.org@1.9.10"></script>
     
     <style>
+        .fundi-card-hover:hover, .customer-card-hover:hover {
+            box-shadow: 0 8px 24px -4px rgba(37,99,235,0.15), 0 1.5px 8px 0 rgba(16,185,129,0.10);
+            transform: translateY(-2px) scale(1.01);
+        }
         :root {
             --primary-color: #2563eb;
             --primary-dark: #1d4ed8;
@@ -110,9 +114,31 @@
             color: var(--primary-color) !important;
         }
         
+        .form-control {
+            border-radius: 0.5rem;
+            border: 2px solid #e5e7eb;
+            transition: border-color 0.3s, box-shadow 0.3s;
+            padding-left: 2.5rem;
+            position: relative;
+        }
         .form-control:focus {
             border-color: var(--primary-color);
             box-shadow: 0 0 0 0.2rem rgba(37, 99, 235, 0.25);
+            animation: borderPulse 0.5s;
+        }
+        @keyframes borderPulse {
+            0% { box-shadow: 0 0 0 0.2rem rgba(37,99,235,0.25); }
+            50% { box-shadow: 0 0 0 0.4rem rgba(37,99,235,0.35); }
+            100% { box-shadow: 0 0 0 0.2rem rgba(37,99,235,0.25); }
+        }
+        .input-icon {
+            position: absolute;
+            left: 1rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--primary-color);
+            font-size: 1.2rem;
+            pointer-events: none;
         }
         
         .btn-outline-primary {
@@ -161,18 +187,18 @@
                     {% if user.is_authenticated %}
                         {% if user.role == 'customer' %}
                             <li class="nav-item">
-                                <a class="nav-link" href="{% url 'job_create' %}">
+                                <a class="nav-link" href="{% url 'jobs:job_create' %}">
                                     <i class="bi bi-plus-circle me-1"></i>Post a Job
                                 </a>
                             </li>
                             <li class="nav-item">
-                                <a class="nav-link" href="{% url 'my_jobs' %}">
+                                <a class="nav-link" href="{% url 'jobs:my_jobs' %}">
                                     <i class="bi bi-list-ul me-1"></i>My Jobs
                                 </a>
                             </li>
                         {% elif user.role == 'fundi' %}
                             <li class="nav-item">
-                                <a class="nav-link" href="{% url 'my_applications' %}">
+                                    <a class="nav-link" href="{% url 'jobs:my_applications' %}">
                                     <i class="bi bi-file-earmark-text me-1"></i>My Applications
                                 </a>
                             </li>
@@ -208,15 +234,23 @@
                             </ul>
                         </li>
                     {% else %}
-                        <li class="nav-item">
-                            <a class="nav-link" href="{% url 'account_login' %}">
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" id="loginDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                                 <i class="bi bi-box-arrow-in-right me-1"></i>Login
                             </a>
+                            <ul class="dropdown-menu" aria-labelledby="loginDropdown">
+                                <li><a class="dropdown-item" href="{% url 'login' %}">Login as Fundi</a></li>
+                                <li><a class="dropdown-item" href="{% url 'customer_login' %}">Login as Customer</a></li>
+                            </ul>
                         </li>
-                        <li class="nav-item">
-                            <a class="btn btn-primary ms-2" href="{% url 'account_signup' %}">
+                        <li class="nav-item dropdown">
+                            <a class="btn btn-primary ms-2 dropdown-toggle" href="#" id="signupDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                                 <i class="bi bi-person-plus me-1"></i>Sign Up
                             </a>
+                            <ul class="dropdown-menu" aria-labelledby="signupDropdown">
+                                <li><a class="dropdown-item" href="{% url 'signup' %}">Sign Up as Fundi</a></li>
+                                <li><a class="dropdown-item" href="{% url 'customer_signup' %}">Sign Up as Customer</a></li>
+                            </ul>
                         </li>
                     {% endif %}
                 </ul>
@@ -277,7 +311,7 @@
                     <h6 class="text-white mb-3">For Professionals</h6>
                     <ul class="list-unstyled">
                         {% if not user.is_authenticated %}
-                            <li><a href="{% url 'account_signup' %}" class="text-light text-decoration-none">Join as Fundi</a></li>
+                            <li><a href="{% url 'signup' %}" class="text-light text-decoration-none">Join as Fundi</a></li>
                             <li><a href="{% url 'customer_signup' %}" class="text-light text-decoration-none">Join as Customer</a></li>
                         {% else %}
                             <li><a href="{% url 'fundi_onboarding' %}" class="text-light text-decoration-none">Fundi Onboarding</a></li>

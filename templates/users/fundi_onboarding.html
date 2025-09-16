@@ -1,0 +1,32 @@
+{% extends 'base/base.html' %}
+{% block title %}Fundi Onboarding{% endblock %}
+{% block content %}
+<section class="container py-5">
+  <div class="row justify-content-center">
+    <div class="col-md-8">
+      <div class="card shadow-lg">
+        <div class="card-body p-5">
+          <h2 class="fw-bold text-primary mb-4">Fundi Onboarding</h2>
+          <p class="mb-4">Complete your profile to start applying for jobs and showcase your skills.</p>
+          <form method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+            {% for field in form %}
+              <div class="mb-3">
+                <label for="{{ field.id_for_label }}" class="form-label fw-semibold">{{ field.label }}</label>
+                {{ field }}
+                {% if field.help_text %}
+                  <small class="form-text text-muted">{{ field.help_text }}</small>
+                {% endif %}
+                {% if field.errors %}
+                  <div class="text-danger small">{{ field.errors|striptags }}</div>
+                {% endif %}
+              </div>
+            {% endfor %}
+            <button type="submit" class="btn btn-primary w-100 py-2 mt-2">Complete Onboarding</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}
