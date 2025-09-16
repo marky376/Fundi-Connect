@@ -71,6 +71,10 @@ def apply(request, job_id):
     if request.user.role != 'fundi':
         messages.error(request, 'Only fundis can apply for jobs.')
         return redirect('jobs:job_detail_jobs', job_id=job_id)
+    # Enforce phone verification for job application
+    if not getattr(request.user, 'phone_verified', True):
+        messages.warning(request, 'Please verify your phone number to apply for jobs.')
+        return redirect('verify_otp')
     if not request.user.is_verified:
         # Show countdown and redirect via template
         return render(request, 'jobs/verify_redirect.html', {'redirect_url': '/contact/', 'seconds': 5})
@@ -193,6 +197,10 @@ def job_create(request):
     if request.user.role != 'customer':
         messages.error(request, 'Only customers can post jobs.')
         return redirect('dashboard')
+    # Enforce phone verification for job posting
+    if not getattr(request.user, 'phone_verified', True):
+        messages.warning(request, 'Please verify your phone number to post jobs.')
+        return redirect('verify_otp')
     if not request.user.is_verified:
         # Show countdown and redirect via template
         return render(request, 'jobs/verify_redirect.html', {'redirect_url': '/contact/', 'seconds': 5})

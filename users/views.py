@@ -1,3 +1,55 @@
+from django.shortcuts import render, redirect
+from django.contrib.auth import login, authenticate
+from django.contrib.auth.decorators import login_required
+from django.contrib import messages
+from django.views.decorators.csrf import csrf_exempt
+from django.utils import timezone
+import random
+from django.core.mail import send_mail
+
+# OTP verification view
+@login_required
+@csrf_exempt
+def verify_otp_view(request):
+    user = request.user
+    if user.is_verified:
+        return redirect('dashboard')
+    if request.method == 'POST':
+        otp = request.POST.get('otp', '').strip()
+        if otp and user.otp_code == otp:
+            user.is_verified = True
+            user.otp_code = ''
+            user.save()
+            messages.success(request, 'Email verified successfully!')
+            return redirect('dashboard')
+        else:
+            messages.error(request, 'Invalid OTP. Please try again.')
+    return render(request, 'users/verify_otp.html')
+
+# OTP generation and sending via Gmail SMTP
+def send_otp_to_email(user):
+    otp = str(random.randint(100000, 999999))
+    user.otp_code = otp
+    user.otp_created_at = timezone.now()
+    user.save()
+    subject = "Your FundiConnect OTP"
+    message = f"Your FundiConnect OTP is: {otp}"
+    from_email = "your_gmail_address@gmail.com"  # Set in Django settings for production
+    recipient_list = [user.email]
+    try:
+        send_mail(subject, message, from_email, recipient_list)
+        print(f"OTP sent to {user.email}: {otp}")
+    except Exception as e:
+        print(f"Failed to send OTP: {e}")
+
+def request_otp_view(request):
+    if not request.user.is_authenticated:
+        return redirect('login')
+    if request.method == 'POST':
+        send_otp_to_email(request.user)
+        messages.success(request, 'OTP sent to your email address.')
+        return redirect('verify_otp')
+    return render(request, 'users/request_otp.html')
 from django.contrib.auth import authenticate
 
 def custom_login_view(request):
@@ -127,20 +179,31 @@ def profile_view(request):
             context['portfolio_images'] = request.user.fundi_profile.portfolio_images.all()
         except FundiProfile.DoesNotExist:
             context['fundi_profile'] = None
-        # Handle location and file update for fundi
+        # Handle location, email, and file update for fundi
         if request.method == 'POST' and 'location' in request.POST:
+            email = request.POST.get('email', '').strip()
             location = request.POST.get('location', '').strip()
             latitude = request.POST.get('latitude', '').strip()
             longitude = request.POST.get('longitude', '').strip()
             profile_photo = request.FILES.get('profile_photo')
             id_document = request.FILES.get('id_document')
             updated = False
+            if email:
+                # Check for unique email
+                if User.objects.filter(email=email).exclude(pk=request.user.pk).exists():
+                    messages.error(request, 'This email is already in use by another account.')
+                else:
+                    request.user.email = email
+                    updated = True
+            else:
+                messages.error(request, 'Email cannot be empty.')
             if location:
                 request.user.location = location
-                request.user.save()
                 updated = True
             else:
                 messages.error(request, 'Location cannot be empty.')
+            if updated:
+                request.user.save()
             # Update latitude/longitude if provided
             fundi_profile = context['fundi_profile']
             if latitude and longitude and fundi_profile:
@@ -163,19 +226,31 @@ def profile_view(request):
                 messages.success(request, 'Profile updated successfully!')
                 return redirect('profile')
     elif request.user.role == 'customer':
-        # Handle location and file update for customer
+        # Handle location, email, and file update for customer
         if request.method == 'POST' and 'location' in request.POST:
+            email = request.POST.get('email', '').strip()
             location = request.POST.get('location', '').strip()
             latitude = request.POST.get('latitude', '').strip()
             longitude = request.POST.get('longitude', '').strip()
             profile_photo = request.FILES.get('profile_photo')
             id_document = request.FILES.get('id_document')
             updated = False
+            if email:
+                # Check for unique email
+                if User.objects.filter(email=email).exclude(pk=request.user.pk).exists():
+                    messages.error(request, 'This email is already in use by another account.')
+                else:
+                    request.user.email = email
+                    updated = True
+            else:
+                messages.error(request, 'Email cannot be empty.')
             if location:
                 request.user.location = location
                 updated = True
             else:
                 messages.error(request, 'Location cannot be empty.')
+            if updated:
+                request.user.save()
             # Update latitude/longitude if provided
             if latitude and longitude:
                 try:

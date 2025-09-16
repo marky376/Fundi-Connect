@@ -1,0 +1,27 @@
+{% extends 'base/base.html' %}
+{% block title %}Verify Email{% endblock %}
+{% block content %}
+<div class="container py-5">
+  <div class="row justify-content-center">
+    <div class="col-md-6">
+      <div class="card shadow-lg border-0">
+        <div class="card-body p-4">
+          <h3 class="fw-bold text-primary mb-3">Verify Your Email</h3>
+          <form method="post" action="">
+            {% csrf_token %}
+            <div class="mb-3">
+              <label for="otp" class="form-label">Enter OTP sent to your email</label>
+              <input type="text" name="otp" id="otp" class="form-control" maxlength="6" required>
+            </div>
+            <button type="submit" class="btn btn-primary">Verify</button>
+          </form>
+          <form method="post" action="{% url 'request_otp' %}" class="mt-3">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-outline-info">Resend OTP</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

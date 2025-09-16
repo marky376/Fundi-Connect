@@ -41,11 +41,16 @@ def dashboard(request):
             'categories': categories
         })
     
+    # Enforce email verification for all logged-in users
+    if hasattr(request.user, 'is_verified') and not request.user.is_verified:
+        messages.warning(request, 'Please verify your email to access all features.')
+        return redirect('verify_otp')
+
     # Check if fundi needs to complete onboarding
     if (request.user.role == 'fundi' and 
         not request.user.onboarding_complete):
         return redirect('fundi_onboarding')
-    
+
     # Show role-specific dashboard
     if request.user.role == 'customer':
         # Customer dashboard - show their posted jobs and available fundis
@@ -60,7 +65,7 @@ def dashboard(request):
             'fundis': fundis,
             'notifications': notifications
         })
-    
+
     elif request.user.role == 'fundi':
         # Fundi dashboard - show available jobs and their applications
         available_jobs = Job.objects.filter(
@@ -68,18 +73,18 @@ def dashboard(request):
         ).exclude(
             applications__fundi=request.user
         ).order_by('-created_at')[:6]
-        
+
         my_applications = request.user.job_applications.all().order_by('-created_at')[:5]
         assigned_jobs = request.user.assigned_jobs.filter(
             status__in=['in_progress', 'completed']
         ).order_by('-updated_at')[:5]
-        
+
         return render(request, 'core/fundi_dashboard.html', {
             'available_jobs': available_jobs,
             'my_applications': my_applications,
             'assigned_jobs': assigned_jobs
         })
-    
+
     # Default dashboard for other roles
     return render(request, 'core/dashboard.html')
 

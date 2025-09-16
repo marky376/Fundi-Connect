@@ -8,7 +8,7 @@ import json
 class FundiSignupForm(SignupForm):
     first_name = forms.CharField(max_length=30, required=True)
     last_name = forms.CharField(max_length=30, required=True)
-    
+    # Phone number field removed
     def save(self, request):
         user = super().save(request)
         user.role = 'fundi'
@@ -21,7 +21,7 @@ class FundiSignupForm(SignupForm):
 class CustomerSignupForm(SignupForm):
     first_name = forms.CharField(max_length=30, required=True)
     last_name = forms.CharField(max_length=30, required=True)
-    
+    # Phone number field removed
     def save(self, request):
         user = super().save(request)
         user.role = 'customer'
@@ -42,6 +42,7 @@ class FundiOnboardingForm(forms.Form):
     )
     profile_photo = forms.ImageField(required=True, help_text='Upload your profile photo')
     id_document = forms.ImageField(required=True, help_text='Upload your ID document')
+    # Phone number field removed
     def clean_location(self):
         location = self.cleaned_data['location']
         if not location.strip():
