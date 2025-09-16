@@ -148,9 +148,15 @@
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="{% url 'job_list' %}">
-                            <i class="bi bi-briefcase me-1"></i>Browse Jobs
-                        </a>
+                        {% if user.is_authenticated %}
+                            <a class="nav-link" href="{% url 'job_list' %}">
+                                <i class="bi bi-briefcase me-1"></i>Browse Jobs
+                            </a>
+                        {% else %}
+                            <a class="nav-link" href="{% url 'dashboard' %}#popular-services">
+                                <i class="bi bi-briefcase me-1"></i>Browse Jobs
+                            </a>
+                        {% endif %}
                     </li>
                     {% if user.is_authenticated %}
                         {% if user.role == 'customer' %}
@@ -262,6 +268,7 @@
                     <ul class="list-unstyled">
                         <li><a href="{% url 'dashboard' %}" class="text-light text-decoration-none">Home</a></li>
                         <li><a href="{% url 'job_list' %}" class="text-light text-decoration-none">Browse Jobs</a></li>
+                        <li><a href="{% url 'profile' %}" class="text-light text-decoration-none">My Profile</a></li>
                         <li><a href="{% url 'about' %}" class="text-light text-decoration-none">About Us</a></li>
                         <li><a href="{% url 'contact' %}" class="text-light text-decoration-none">Contact</a></li>
                     </ul>
@@ -272,9 +279,11 @@
                         {% if not user.is_authenticated %}
                             <li><a href="{% url 'account_signup' %}" class="text-light text-decoration-none">Join as Fundi</a></li>
                             <li><a href="{% url 'customer_signup' %}" class="text-light text-decoration-none">Join as Customer</a></li>
+                        {% else %}
+                            <li><a href="{% url 'fundi_onboarding' %}" class="text-light text-decoration-none">Fundi Onboarding</a></li>
                         {% endif %}
-                        <li><a href="#" class="text-light text-decoration-none">Help Center</a></li>
-                        <li><a href="#" class="text-light text-decoration-none">Terms of Service</a></li>
+                        <li><a href="https://fundiconnect.co.ke/help" class="text-light text-decoration-none" target="_blank">Help Center</a></li>
+                        <li><a href="https://fundiconnect.co.ke/terms" class="text-light text-decoration-none" target="_blank">Terms of Service</a></li>
                     </ul>
                 </div>
             </div>

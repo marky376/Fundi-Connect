@@ -5,4 +5,7 @@ urlpatterns = [
     path('fundi-onboarding/', views.fundi_onboarding, name='fundi_onboarding'),
     path('profile/', views.profile_view, name='profile'),
     path('signup/customer/', views.customer_signup_view, name='customer_signup'),
+    path('signup/', views.FundiSignupView.as_view(), name='signup'),
+    # Custom login view (if needed)
+    # path('login/', views.custom_login_view, name='login'),
 ]

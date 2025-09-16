@@ -10,7 +10,7 @@ import json
 
 
 class FundiSignupView(SignupView):
-    template_name = 'account/fundi_signup.html'
+    template_name = 'users/signup.html'
     form_class = FundiSignupForm
     
     def form_valid(self, form):
@@ -73,4 +73,4 @@ def profile_view(request):
 
 
 def customer_signup_view(request):
-    return render(request, 'account/customer_signup.html')
+    return render(request, 'users/signup.html')
