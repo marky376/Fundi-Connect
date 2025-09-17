@@ -141,14 +141,6 @@ def pesapal_callback(request):
         'fundi_payment_completed': fundi_payment_completed,
         'can_chat': can_chat,
     })
-
-    from .models import Message
-    messages_qs = Message.objects.filter(job=job, sender__in=[job.customer, fundi], recipient__in=[job.customer, fundi]).order_by('created_at')
-    return render(request, 'jobs/job_messages.html', {
-        'job': job,
-        'fundi': fundi,
-        'messages': messages_qs,
-    })
 from .models import Job, JobApplication, Category, JobImage
 from .forms import JobForm, JobApplicationForm
 
