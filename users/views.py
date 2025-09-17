@@ -57,28 +57,12 @@ def custom_login_view(request):
         email = request.POST.get('email')
         password = request.POST.get('password')
         user = authenticate(request, email=email, password=password)
-        # Check if user exists by email
-        try:
-            db_user = User.objects.get(email=email)
-        except User.DoesNotExist:
-            db_user = None
         if user is not None:
-            if getattr(user, 'role', None) == 'fundi':
-                messages.error(request, 'This email belongs to a Fundi. Please use the Fundi login form.')
-                return redirect('customer_login')
             login(request, user)
             messages.success(request, 'Logged in successfully!')
             return redirect('dashboard')
         else:
-            if db_user:
-                if db_user.role == 'fundi':
-                    messages.error(request, 'This email belongs to a Fundi. Please use the Fundi login form.')
-                elif db_user.role == 'customer':
-                    messages.error(request, 'Invalid password for customer account.')
-                else:
-                    messages.error(request, 'Invalid credentials.')
-            else:
-                messages.error(request, 'Invalid email or password. Please try again.')
+            messages.error(request, 'Invalid email or password. Please try again.')
     return render(request, 'users/login.html')
 
 def customer_login_view(request):
@@ -86,24 +70,12 @@ def customer_login_view(request):
         email = request.POST.get('email')
         password = request.POST.get('password')
         user = authenticate(request, email=email, password=password)
-        try:
-            db_user = User.objects.get(email=email)
-        except User.DoesNotExist:
-            db_user = None
-        if user is not None and getattr(user, 'role', None) == 'customer':
+        if user is not None:
             login(request, user)
-            messages.success(request, 'Logged in successfully as customer!')
+            messages.success(request, 'Logged in successfully!')
             return redirect('dashboard')
         else:
-            if db_user:
-                if db_user.role == 'fundi':
-                    messages.error(request, 'This email belongs to a Fundi. Please use the Fundi login form.')
-                elif db_user.role == 'customer':
-                    messages.error(request, 'Invalid password for customer account.')
-                else:
-                    messages.error(request, 'Invalid credentials.')
-            else:
-                messages.error(request, 'Invalid email or password for customer. Please try again.')
+            messages.error(request, 'Invalid email or password. Please try again.')
     return render(request, 'users/customer_login.html')
 from django.shortcuts import render, redirect
 from django.contrib.auth import login

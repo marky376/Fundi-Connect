@@ -1,3 +1,27 @@
+# Pesapal integration scaffold
+import requests
+from django.conf import settings
+
+PESAPAL_CONSUMER_KEY = getattr(settings, 'PESAPAL_CONSUMER_KEY', '')
+PESAPAL_CONSUMER_SECRET = getattr(settings, 'PESAPAL_CONSUMER_SECRET', '')
+
+def initiate_pesapal_payment(amount, description, phone_number, callback_url):
+    # Placeholder for Pesapal payment initiation
+    # You will need to fill in the actual API call and authentication
+    payload = {
+        'amount': amount,
+        'description': description,
+        'phone_number': phone_number,
+        'callback_url': callback_url,
+    }
+    # Example: response = requests.post(PESAPAL_API_URL, data=payload, auth=(PESAPAL_CONSUMER_KEY, PESAPAL_CONSUMER_SECRET))
+    # return response.json()
+    return {'status': 'initiated', 'redirect_url': '/'}
+
+def verify_pesapal_payment(payment_id):
+    # Placeholder for Pesapal payment verification
+    # You will need to fill in the actual API call
+    return {'status': 'completed'}
 import requests
 from django.conf import settings
 

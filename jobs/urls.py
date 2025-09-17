@@ -17,4 +17,7 @@ urlpatterns = [
     path('apply/<int:job_id>/', views.apply, name='apply'),
     path('<int:job_id>/messages/<int:fundi_id>/', views.job_messages, name='job_messages'),
     path('<int:job_id>/accept/<int:application_id>/', views.accept_application, name='accept_application'),
+    path('<int:job_id>/update-status/', views.job_update_status, name='job_update_status'),
+    path('<int:job_id>/pay/<int:fundi_id>/', views.payment_initiate, name='payment_initiate'),
+    path('pesapal/callback/', views.pesapal_callback, name='pesapal_callback'),
 ]

@@ -32,31 +32,38 @@
                         <a href="{% url 'jobs:apply' job.id %}" class="btn btn-success w-100 mt-3">Apply for this Job</a>
                     {% endif %}
                     {% if user.is_authenticated and user.role == 'customer' and job.customer == user %}
+                        <a href="{% url 'jobs:job_update_status' job.id %}" class="btn btn-warning mb-3">Update Job Status</a>
                         <hr>
-                        <h4 class="mt-4">Applicants</h4>
-                        {% if applicants %}
-                            <ul class="list-group mb-3">
-                                {% for application in applicants %}
-                                    <li class="list-group-item">
-                                        <strong>{{ application.fundi.get_full_name|default:application.fundi.email }}</strong>
-                                        <span class="badge bg-secondary ms-2">{{ application.status|capfirst }}</span>
-                                        <br>
-                                        <small>Applied on {{ application.created_at|date:"M d, Y H:i" }}</small>
-                                        {% if application.message %}<br><em>{{ application.message }}</em>{% endif %}
-                                        {% if application.proposed_rate %}<br>Proposed Rate: KES {{ application.proposed_rate }}{% endif %}
-                                        {% if application.status == 'pending' %}
-                                            <form method="post" action="{% url 'jobs:accept_application' job.id application.id %}" style="display:inline;">
-                                                {% csrf_token %}
-                                                <button type="submit" class="btn btn-success btn-sm mt-2">Accept</button>
-                                            </form>
-                                        {% elif application.status == 'accepted' %}
-                                            <a href="{% url 'jobs:job_messages' job.id application.fundi.id %}" class="btn btn-outline-primary btn-sm mt-2">Message Fundi</a>
-                                        {% endif %}
-                                    </li>
-                                {% endfor %}
-                            </ul>
+                        {% if payment_completed %}
+                            <h4 class="mt-4">Applicants</h4>
+                            {% if applicants %}
+                                <ul class="list-group mb-3">
+                                    {% for application in applicants %}
+                                        <li class="list-group-item">
+                                            <strong>{{ application.fundi.get_full_name|default:application.fundi.email }}</strong>
+                                            <span class="badge bg-secondary ms-2">{{ application.status|capfirst }}</span>
+                                            <br>
+                                            <small>Applied on {{ application.created_at|date:"M d, Y H:i" }}</small>
+                                            {% if application.message %}<br><em>{{ application.message }}</em>{% endif %}
+                                            {% if application.proposed_rate %}<br>Proposed Rate: KES {{ application.proposed_rate }}{% endif %}
+                                            {% if application.status == 'pending' %}
+                                                <form method="post" action="{% url 'jobs:accept_application' job.id application.id %}" style="display:inline;">
+                                                    {% csrf_token %}
+                                                    <button type="submit" class="btn btn-success btn-sm mt-2">Accept</button>
+                                                </form>
+                                            {% elif application.status == 'accepted' %}
+                                                <a href="{% url 'jobs:job_messages' job.id application.fundi.id %}" class="btn btn-outline-primary btn-sm mt-2">Message Fundi</a>
+                                            {% endif %}
+                                        </li>
+                                    {% endfor %}
+                                </ul>
+                            {% else %}
+                                <p class="text-muted">No fundis have applied yet.</p>
+                            {% endif %}
                         {% else %}
-                            <p class="text-muted">No fundis have applied yet.</p>
+                            <div class="alert alert-warning mt-4">
+                                <strong>Complete payment to view applicants and start conversations.</strong>
+                            </div>
                         {% endif %}
                     {% endif %}
                 </div>

@@ -16,7 +16,58 @@
               <span class="badge bg-info">{{ app.status|title }}</span>
               <a href="{% url 'jobs:job_detail_jobs' app.job.id %}" class="btn btn-outline-primary btn-sm ms-2">View Job</a>
               {% if app.status == 'accepted' %}
-                <a href="{% url 'jobs:job_messages' app.job.id app.fundi.id %}" class="btn btn-primary btn-sm ms-2">Message Customer</a>
+                {% comment %} Show fundi fee info after acceptance {% endcomment %}
+                {% if app.job.budget_min and app.job.budget_min >= 500 %}
+                  <span class="text-warning ms-3">You must pay a fee of KES 100 to proceed.</span>
+                  <button type="button" class="btn btn-outline-warning btn-sm ms-2" data-bs-toggle="modal" data-bs-target="#payModal{{ app.id }}">Pay Now</button>
+                  <!-- Payment Modal -->
+                  <div class="modal fade" id="payModal{{ app.id }}" tabindex="-1" aria-labelledby="payModalLabel{{ app.id }}" aria-hidden="true">
+                    <div class="modal-dialog">
+                      <div class="modal-content">
+                        <div class="modal-header">
+                          <h5 class="modal-title" id="payModalLabel{{ app.id }}">Pay Fundi Fee</h5>
+                          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <form method="post" action="{% url 'jobs:payment_initiate' app.job.id app.fundi.id %}">
+                          {% csrf_token %}
+                          <div class="modal-body">
+                            <p>Enter your phone number to pay KES 100 via mobile money:</p>
+                            <input type="text" name="phone_number" class="form-control mb-3" placeholder="e.g. 07XXXXXXXX" required>
+                          </div>
+                          <div class="modal-footer">
+                            <button type="submit" class="btn btn-warning">Pay KES 100</button>
+                          </div>
+                        </form>
+                      </div>
+                    </div>
+                  </div>
+                {% elif app.job.budget_max and app.job.budget_max < 500 %}
+                  <span class="text-warning ms-3">You must pay a fee of KES 50 to proceed.</span>
+                  <button type="button" class="btn btn-outline-warning btn-sm ms-2" data-bs-toggle="modal" data-bs-target="#payModal{{ app.id }}">Pay Now</button>
+                  <!-- Payment Modal -->
+                  <div class="modal fade" id="payModal{{ app.id }}" tabindex="-1" aria-labelledby="payModalLabel{{ app.id }}" aria-hidden="true">
+                    <div class="modal-dialog">
+                      <div class="modal-content">
+                        <div class="modal-header">
+                          <h5 class="modal-title" id="payModalLabel{{ app.id }}">Pay Fundi Fee</h5>
+                          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <form method="post" action="{% url 'jobs:payment_initiate' app.job.id app.fundi.id %}">
+                          {% csrf_token %}
+                          <div class="modal-body">
+                            <p>Enter your phone number to pay KES 50 via mobile money:</p>
+                            <input type="text" name="phone_number" class="form-control mb-3" placeholder="e.g. 07XXXXXXXX" required>
+                          </div>
+                          <div class="modal-footer">
+                            <button type="submit" class="btn btn-warning">Pay KES 50</button>
+                          </div>
+                        </form>
+                      </div>
+                    </div>
+                  </div>
+                {% else %}
+                  <span class="text-warning ms-3">No fee required for this job.</span>
+                {% endif %}
               {% endif %}
             </li>
           {% endfor %}

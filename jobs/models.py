@@ -96,6 +96,25 @@ class JobApplication(models.Model):
         return f"{self.fundi.email} applied for {self.job.title}"
 
 
+class Payment(models.Model):
+    STATUS_CHOICES = [
+        ('pending', 'Pending'),
+        ('completed', 'Completed'),
+        ('failed', 'Failed'),
+    ]
+    amount = models.DecimalField(max_digits=10, decimal_places=2)
+    commission = models.DecimalField(max_digits=10, decimal_places=2)
+    fundi_amount = models.DecimalField(max_digits=10, decimal_places=2)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    customer = models.ForeignKey(User, on_delete=models.CASCADE, related_name='payments_made')
+    fundi = models.ForeignKey(User, on_delete=models.CASCADE, related_name='payments_received', blank=True, null=True)
+    job = models.ForeignKey(Job, on_delete=models.CASCADE, related_name='payments', blank=True, null=True)
+
+    def __str__(self):
+        return f"Payment for {self.job.title} - {self.amount} ({self.status})"
+
 class Review(models.Model):
     job = models.OneToOneField(Job, on_delete=models.CASCADE, related_name='review')
     reviewer = models.ForeignKey(User, on_delete=models.CASCADE, related_name='reviews_given')

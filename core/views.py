@@ -67,9 +67,11 @@ def dashboard(request):
         })
 
     elif request.user.role == 'fundi':
-        # Fundi dashboard - show available jobs and their applications
+        # Fundi dashboard - show available jobs filtered by fundi skills/category
+        fundi_skills = request.user.fundi_profile.skills if hasattr(request.user, 'fundi_profile') else []
         available_jobs = Job.objects.filter(
-            status='open'
+            status='open',
+            category__name__in=fundi_skills
         ).exclude(
             applications__fundi=request.user
         ).order_by('-created_at')[:6]

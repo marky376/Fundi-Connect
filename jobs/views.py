@@ -1,4 +1,32 @@
 
+
+from django.contrib.auth.decorators import login_required
+from .models import Job, JobApplication, Category, JobImage
+from .pesapal_api import initiate_pesapal_payment, verify_pesapal_payment
+from django.urls import reverse
+from django.views.decorators.csrf import csrf_exempt
+from django import forms
+
+# Form for updating job status
+class JobStatusUpdateForm(forms.Form):
+    status = forms.ChoiceField(choices=Job.STATUS_CHOICES, label="New Status")
+
+
+@login_required
+def job_update_status(request, job_id):
+    job = get_object_or_404(Job, id=job_id, customer=request.user)
+    if request.method == 'POST':
+        form = JobStatusUpdateForm(request.POST)
+        if form.is_valid():
+            new_status = form.cleaned_data['status']
+            job.status = new_status
+            job.save()
+            messages.success(request, f"Job status updated to '{job.get_status_display()}'.")
+            return redirect('jobs:job_detail_jobs', job_id=job.id)
+    else:
+        form = JobStatusUpdateForm(initial={'status': job.status})
+    return render(request, 'jobs/job_update_status.html', {'job': job, 'form': form, 'status_choices': Job.STATUS_CHOICES})
+
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.http import require_POST
 
@@ -15,7 +43,20 @@ def accept_application(request, job_id, application_id):
         return redirect('jobs:job_detail_jobs', job_id=job_id)
     application.status = 'accepted'
     application.save()
-    messages.success(request, f'Accepted {application.fundi.get_full_name() or application.fundi.email} for this job.')
+    # Fundi payment logic
+    from .models import Payment
+    fundi_fee = 100 if job.budget_min and job.budget_min > 500 else 50 if job.budget_max and job.budget_max <= 500 else 0
+    if fundi_fee > 0:
+        Payment.objects.create(
+            amount=fundi_fee,
+            commission=0,
+            fundi_amount=0,
+            status='pending',
+            customer=request.user,
+            fundi=application.fundi,
+            job=job
+        )
+    messages.success(request, f'Accepted {application.fundi.get_full_name() or application.fundi.email} for this job. Fundi fee: KES {fundi_fee}.')
     return redirect('jobs:job_detail_jobs', job_id=job_id)
 
 # All imports at the top
@@ -29,6 +70,7 @@ from django.db.models import Q
 
 @login_required
 def job_messages(request, job_id, fundi_id):
+    from .models import Message
     job = get_object_or_404(Job, id=job_id)
     fundi = get_object_or_404(User, id=fundi_id, role='fundi')
     # Only allow if fundi is accepted for this job
@@ -37,29 +79,75 @@ def job_messages(request, job_id, fundi_id):
         messages.error(request, 'You are not authorized to view this conversation.')
         return redirect('jobs:job_detail_jobs', job_id=job_id)
 
-    # Handle new message
-    if request.method == 'POST' and (request.user == job.customer or request.user == fundi):
+@login_required
+def payment_initiate(request, job_id, fundi_id):
+    job = get_object_or_404(Job, id=job_id)
+    fundi = get_object_or_404(User, id=fundi_id, role='fundi')
+    amount = 100 if job.budget_min and job.budget_min >= 500 else 50 if job.budget_max and job.budget_max < 500 else 0
+    if request.method == 'POST' and amount > 0:
+        phone_number = request.POST.get('phone_number')
+        description = f'Fundi fee for job {job.title}'
+        callback_url = request.build_absolute_uri(reverse('jobs:pesapal_callback'))
+        result = initiate_pesapal_payment(amount, description, phone_number, callback_url)
+        # Redirect to Pesapal payment page (replace with actual redirect_url)
+        return redirect(result.get('redirect_url', '/'))
+    return redirect('jobs:my_applications')
+
+@csrf_exempt
+def pesapal_callback(request):
+    # This endpoint will be called by Pesapal after payment
+    payment_id = request.GET.get('payment_id')
+    job_id = request.GET.get('job_id')
+    fundi_id = request.GET.get('fundi_id')
+    if payment_id and job_id and fundi_id:
+        result = verify_pesapal_payment(payment_id)
+        if result.get('status') == 'completed':
+            job = get_object_or_404(Job, id=job_id)
+            fundi = get_object_or_404(User, id=fundi_id, role='fundi')
+            payment = job.payments.filter(fundi=fundi).order_by('-created_at').first()
+            if payment:
+                payment.status = 'completed'
+                payment.save()
+    return redirect('jobs:my_applications')
+    # Fundi payment check
+    fundi_payment = None
+    fundi_payment_completed = False
+    if request.user == fundi:
+        fundi_payment = job.payments.filter(fundi=fundi, status__in=['pending', 'completed']).order_by('-created_at').first()
+        fundi_payment_completed = fundi_payment and fundi_payment.status == 'completed'
+
+    # Prevent fundi from messaging customer after acceptance
+    can_chat = True
+    accepted = JobApplication.objects.filter(job=job, fundi=fundi, status='accepted').exists()
+    if request.user == fundi and accepted:
+        can_chat = False
+    elif request.user == fundi and fundi_payment and not fundi_payment_completed:
+        can_chat = False
+
+    if request.method == 'POST' and can_chat and (request.user == job.customer or request.user == fundi):
         content = request.POST.get('content', '').strip()
         if content:
-            from .models import Message
-            # Determine recipient: if sender is customer, recipient is fundi; if sender is fundi, recipient is customer
             recipient = fundi if request.user == job.customer else job.customer
-            Message.objects.create(
-                job=job,
-                sender=request.user,
-                recipient=recipient,
-                content=content
-            )
+            Message.objects.create(job=job, sender=request.user, recipient=recipient, content=content)
             messages.success(request, 'Message sent.')
             return redirect('jobs:job_messages', job_id=job.id, fundi_id=fundi.id)
 
-    # Get all messages for this job and fundi
+    messages_qs = Message.objects.filter(job=job, sender__in=[job.customer, fundi], recipient__in=[job.customer, fundi]).order_by('created_at')
+    return render(request, 'jobs/job_messages.html', {
+        'job': job,
+        'fundi': fundi,
+        'messages': messages_qs,
+        'fundi_payment': fundi_payment,
+        'fundi_payment_completed': fundi_payment_completed,
+        'can_chat': can_chat,
+    })
+
     from .models import Message
     messages_qs = Message.objects.filter(job=job, sender__in=[job.customer, fundi], recipient__in=[job.customer, fundi]).order_by('created_at')
     return render(request, 'jobs/job_messages.html', {
         'job': job,
         'fundi': fundi,
-        'messages': messages_qs
+        'messages': messages_qs,
     })
 from .models import Job, JobApplication, Category, JobImage
 from .forms import JobForm, JobApplicationForm
@@ -180,13 +268,18 @@ def job_detail(request, job_id):
         user_has_applied = job.applications.filter(fundi=request.user).exists()
     
     applicants = []
+    payment_completed = False
     if request.user.is_authenticated and request.user.role == 'customer' and job.customer == request.user:
-        applicants = job.applications.select_related('fundi').all()
+        # Check if payment for this job is completed
+        payment_completed = job.payments.filter(status='completed').exists()
+        if payment_completed:
+            applicants = job.applications.select_related('fundi').all()
 
     context = {
         'job': job,
         'user_has_applied': user_has_applied,
         'applicants': applicants,
+        'payment_completed': payment_completed,
     }
     return render(request, 'jobs/job_detail.html', context)
 

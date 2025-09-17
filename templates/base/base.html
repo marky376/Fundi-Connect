@@ -354,6 +354,17 @@
                     }, 500); // Bootstrap fade duration
                 }, 3000);
             });
+
+            // Autofocus phone input in payment modal
+            const modals = document.querySelectorAll('.modal');
+            modals.forEach(function(modal) {
+                modal.addEventListener('shown.bs.modal', function () {
+                    const input = modal.querySelector('input[name="phone_number"]');
+                    if (input) {
+                        input.focus();
+                    }
+                });
+            });
         });
     </script>
     {% block extra_js %}{% endblock %}
