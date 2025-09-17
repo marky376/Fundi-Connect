@@ -2,39 +2,127 @@
 {% block title %}Customer Dashboard{% endblock %}
 {% block content %}
 <section class="container py-5">
+  <!-- Popular Services Section -->
+  <section class="mb-5">
+    <div class="container">
+      <div class="text-center mb-4">
+        <h3 class="fw-bold mb-2 text-primary"><i class="bi bi-stars me-2"></i>Popular Services</h3>
+        <p class="text-muted">Quickly find professionals for these common services</p>
+      </div>
+      <div class="row g-4 justify-content-center">
+        {% if categories %}
+          {% for category in categories %}
+          <div class="col-md-3 col-6">
+            <div class="card h-100 text-center border-0 shadow-sm customer-card-hover">
+              <div class="card-body">
+                <div class="mb-3">
+                  {% if category.name == 'Plumbing' %}
+                    <i class="bi bi-wrench display-6 text-primary"></i>
+                  {% elif category.name == 'Electrical' %}
+                    <i class="bi bi-lightning display-6 text-warning"></i>
+                  {% elif category.name == 'Carpentry' %}
+                    <i class="bi bi-hammer display-6 text-success"></i>
+                  {% elif category.name == 'Cleaning' %}
+                    <i class="bi bi-house display-6 text-info"></i>
+                  {% else %}
+                    <i class="bi bi-tools display-6 text-primary"></i>
+                  {% endif %}
+                </div>
+                <h6 class="card-title">{{ category.name }}</h6>
+                <p class="card-text text-muted small">{{ category.description|truncatewords:8 }}</p>
+              </div>
+            </div>
+          </div>
+          {% endfor %}
+        {% else %}
+          <div class="col-md-3 col-6">
+            <div class="card h-100 text-center border-0 shadow-sm customer-card-hover">
+              <div class="card-body">
+                <i class="bi bi-wrench display-6 text-primary mb-3"></i>
+                <h6 class="card-title">Plumbing</h6>
+                <p class="card-text text-muted small">Repairs, installations, maintenance</p>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-3 col-6">
+            <div class="card h-100 text-center border-0 shadow-sm customer-card-hover">
+              <div class="card-body">
+                <i class="bi bi-lightning display-6 text-warning mb-3"></i>
+                <h6 class="card-title">Electrical</h6>
+                <p class="card-text text-muted small">Wiring, outlets, lighting</p>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-3 col-6">
+            <div class="card h-100 text-center border-0 shadow-sm customer-card-hover">
+              <div class="card-body">
+                <i class="bi bi-hammer display-6 text-success mb-3"></i>
+                <h6 class="card-title">Carpentry</h6>
+                <p class="card-text text-muted small">Furniture, repairs, custom work</p>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-3 col-6">
+            <div class="card h-100 text-center border-0 shadow-sm customer-card-hover">
+              <div class="card-body">
+                <i class="bi bi-house display-6 text-info mb-3"></i>
+                <h6 class="card-title">Cleaning</h6>
+                <p class="card-text text-muted small">Deep cleaning, maintenance</p>
+              </div>
+            </div>
+          </div>
+        {% endif %}
+      </div>
+    </div>
+  </section>
   <div class="row">
     <div class="col-md-8">
-      <h2 class="fw-bold text-primary mb-4">Welcome, {{ user.first_name|default:user.email }}!</h2>
-      <div class="card mb-4">
+      <div class="mb-4">
+        <h2 class="fw-bold text-primary mb-2">
+          <i class="bi bi-person-circle me-2"></i>Welcome, <span class="text-gradient">{{ user.first_name|default:user.email }}</span>!
+        </h2>
+        <p class="text-muted">Your personalized dashboard for managing jobs and finding Fundis nearby.</p>
+      </div>
+      <div class="card mb-4 shadow-lg border-0 customer-card-hover" style="background: linear-gradient(135deg, #e0e7ff 0%, #f0fdf4 100%);">
         <div class="card-body">
-          <h4 class="mb-3">Your Recent Jobs</h4>
+          <h4 class="mb-3 text-primary"><i class="bi bi-briefcase me-2"></i>Your Recent Jobs</h4>
           {% if user_jobs %}
-            <ul class="list-group">
+            <ul class="list-group list-group-flush">
               {% for job in user_jobs %}
-                <li class="list-group-item d-flex justify-content-between align-items-center">
-                  <span>{{ job.title }}</span>
-                  <span class="badge bg-secondary">{{ job.status|title }}</span>
+                <li class="list-group-item d-flex justify-content-between align-items-center bg-transparent">
+                  <div>
+                    <span class="fw-semibold text-dark"><i class="bi bi-hammer me-2 text-accent"></i>{{ job.title }}</span>
+                    <span class="badge bg-secondary ms-2">{{ job.status|title }}</span>
+                  </div>
+                  <a href="{% url 'jobs:job_detail_jobs' job.id %}" class="btn btn-outline-primary btn-sm ms-3">View</a>
                 </li>
               {% endfor %}
             </ul>
           {% else %}
-            <p class="text-muted">You haven't posted any jobs yet.</p>
+            <div class="text-center py-4">
+              <i class="bi bi-emoji-frown display-4 text-muted mb-2"></i>
+              <p class="text-muted">You haven't posted any jobs yet.</p>
+              <a href="{% url 'jobs:job_create' %}" class="btn btn-primary mt-2"><i class="bi bi-plus-circle me-1"></i>Post a Job</a>
+            </div>
           {% endif %}
         </div>
       </div>
-      <div class="card mb-4">
+      <div class="card mb-4 shadow-lg border-0 customer-card-hover" style="background: linear-gradient(135deg, #f0fdf4 0%, #e0e7ff 100%);">
         <div class="card-body">
-          <h4 class="mb-3">Nearby Fundis</h4>
+          <h4 class="mb-3 text-success"><i class="bi bi-geo-alt me-2"></i>Nearby Fundis</h4>
           <form id="fundi-filter-form" class="mb-3 d-flex flex-wrap gap-2">
-            <input type="text" id="skill-filter" class="form-control" placeholder="Filter by skill (e.g. Plumbing)">
-            <select id="status-filter" class="form-select">
+            <div class="input-group flex-grow-1">
+              <span class="input-group-text bg-white"><i class="bi bi-search text-primary"></i></span>
+              <input type="text" id="skill-filter" class="form-control" placeholder="Filter by skill (e.g. Plumbing)">
+            </div>
+            <select id="status-filter" class="form-select w-auto">
               <option value="">All Status</option>
               <option value="true">Available</option>
               <option value="false">Unavailable</option>
             </select>
-            <button type="button" class="btn btn-outline-primary" onclick="updateFundis()">Apply Filter</button>
+            <button type="button" class="btn btn-outline-primary" onclick="updateFundis()"><i class="bi bi-funnel me-1"></i>Apply Filter</button>
           </form>
-          <div id="fundi-map" style="height: 350px;"></div>
+          <div id="fundi-map" style="height: 350px; border-radius: 12px; overflow: hidden;"></div>
           <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
           <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
           <link rel="stylesheet" href="/static/leaflet.markercluster.css" />

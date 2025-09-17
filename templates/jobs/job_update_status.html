@@ -1,0 +1,67 @@
+{% extends 'base/base.html' %}
+{% block content %}
+<div class="container mt-4">
+  <h2>Update Job Status</h2>
+  <form method="post">
+    {% csrf_token %}
+    <div class="mb-3">
+      <label for="status" class="form-label">Select new status:</label>
+      <select name="status" id="status" class="form-select">
+        {% for value, label in status_choices %}
+          <option value="{{ value }}" {% if job.status == value %}selected{% endif %}>{{ label }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="mb-3">
+      <label for="customer_phone" class="form-label">Phone number for Mpesa prompt (KES 50 fee):</label>
+      <input type="text" name="customer_phone" id="customer_phone" class="form-control" value="{{ customer_payment_phone }}" placeholder="Enter phone number">
+    </div>
+    <button type="submit" class="btn btn-primary">Update Status</button>
+  </form>
+  <p class="mt-3">Current status: <strong>{{ job.get_status_display }}</strong></p>
+  <div class="mt-2">
+    <strong>Customer Payment Status:</strong>
+    {% if customer_payment_status == 'completed' %}
+      <span class="badge bg-success">Paid</span>
+    {% elif customer_payment_status == 'pending' %}
+      <span class="badge bg-warning text-dark">Pending</span>
+    {% else %}
+      <span class="badge bg-secondary">Not Initiated</span>
+    {% endif %}
+  </div>
+  {% if messages %}
+    {% for message in messages %}
+      <div class="alert alert-info mt-2">{{ message }}</div>
+    {% endfor %}
+  {% endif %}
+  {% if payout_details %}
+    <div class="mt-4">
+      <h5>Payout Details</h5>
+      <table class="table table-bordered">
+        <thead>
+          <tr>
+            <th>Fundi</th>
+            <th>Phone Number</th>
+            <th>Amount Paid</th>
+            <th>Commission</th>
+            <th>Total</th>
+            <th>Mpesa Prompt</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for payout in payout_details %}
+            <tr>
+              <td>{{ payout.fundi }}</td>
+              <td>{{ payout.phone }}</td>
+              <td>KES {{ payout.amount }}</td>
+              <td>KES {{ payout.commission }}</td>
+              <td>KES {{ payout.total }}</td>
+              <td>{{ payout.mpesa_message }}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% endif %}
+</div>
+{% endblock %}
