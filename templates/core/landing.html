@@ -16,7 +16,7 @@
                     and more. Or showcase your skills and grow your business.
                 </p>
                 <div class="d-flex flex-column flex-md-row gap-3">
-                    <a href="{% url 'account_signup' %}" class="btn btn-light btn-lg px-4">
+                    <a href="{% url 'customer_signup' %}" class="btn btn-light btn-lg px-4">
                         <i class="bi bi-person-plus me-2"></i>Join as Customer
                     </a>
                     <a href="{% url 'account_signup' %}" class="btn btn-outline-light btn-lg px-4">
@@ -172,8 +172,11 @@
                         </div>
                         <h4 class="card-title text-primary">Need a Job Done?</h4>
                         <p class="card-text">Post your job request and get connected with skilled Fundis in your area.</p>
-                        <a href="{% url 'account_signup' %}" class="btn btn-primary">
+                        
+                        <!-- Updated link to customer signup -->
+                        <a href="{% url 'customer_signup' %}" class="btn btn-primary">
                             Post a Job <i class="bi bi-plus-circle ms-1"></i>
+                        </a>
                         </a>
                     </div>
                 </div>
@@ -189,6 +192,123 @@
                         <a href="{% url 'account_signup' %}" class="btn btn-success">
                             Join as Fundi <i class="bi bi-arrow-right ms-1"></i>
                         </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Customer Reviews Section -->
+<section class="py-5 bg-white">
+    <div class="container">
+        <div class="text-center mb-5">
+            <h2 class="fw-bold mb-3">What Customers Say</h2>
+            <p class="text-muted">Real feedback from happy customers</p>
+        </div>
+        <div class="row g-4 justify-content-center">
+            <div class="col-md-6 col-lg-4">
+                <div class="card h-100 border-0 shadow-sm">
+                    <div class="card-body">
+                        <div class="d-flex align-items-center mb-3">
+                            <img src="https://randomuser.me/api/portraits/men/32.jpg" alt="Customer" class="rounded-circle me-3" width="48" height="48">
+                            <div>
+                                <h6 class="mb-0 fw-bold">James Mwangi</h6>
+                                <small class="text-muted">Nairobi</small>
+                            </div>
+                        </div>
+                        <p class="card-text">"FundiConnect made it so easy to find a reliable plumber. The job was done quickly and professionally!"</p>
+                        <div class="text-warning">
+                            <i class="bi bi-star-fill"></i>
+                            <i class="bi bi-star-fill"></i>
+                            <i class="bi bi-star-fill"></i>
+                            <i class="bi bi-star-fill"></i>
+                            <i class="bi bi-star-fill"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6 col-lg-4">
+                <div class="card h-100 border-0 shadow-sm">
+                    <div class="card-body">
+                        <div class="d-flex align-items-center mb-3">
+                            <img src="https://randomuser.me/api/portraits/women/44.jpg" alt="Customer" class="rounded-circle me-3" width="48" height="48">
+                            <div>
+                                <h6 class="mb-0 fw-bold">Grace Wanjiru</h6>
+                                <small class="text-muted">Mombasa</small>
+                            </div>
+                        </div>
+                        <p class="card-text">"I posted a job for carpentry and got connected to a skilled fundi within hours. Highly recommend!"</p>
+                        <div class="text-warning">
+                            <i class="bi bi-star-fill"></i>
+                            <i class="bi bi-star-fill"></i>
+                            <i class="bi bi-star-fill"></i>
+                            <i class="bi bi-star-fill"></i>
+                            <i class="bi bi-star-fill"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6 col-lg-4">
+                <div class="card h-100 border-0 shadow-sm">
+                    <div class="card-body">
+                        <div class="d-flex align-items-center mb-3">
+                            <img src="https://randomuser.me/api/portraits/men/65.jpg" alt="Customer" class="rounded-circle me-3" width="48" height="48">
+                            <div>
+                                <h6 class="mb-0 fw-bold">Peter Otieno</h6>
+                                <small class="text-muted">Kisumu</small>
+                            </div>
+                        </div>
+                        <p class="card-text">"The fundi I hired for electrical work was very knowledgeable and friendly. Great experience!"</p>
+                        <div class="text-warning">
+                            <i class="bi bi-star-fill"></i>
+                            <i class="bi bi-star-fill"></i>
+                            <i class="bi bi-star-fill"></i>
+                            <i class="bi bi-star-fill"></i>
+                            <i class="bi bi-star-fill"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6 col-lg-4">
+                <div class="card h-100 border-0 shadow-sm">
+                    <div class="card-body">
+                        <div class="d-flex align-items-center mb-3">
+                            <img src="https://randomuser.me/api/portraits/women/68.jpg" alt="Customer" class="rounded-circle me-3" width="48" height="48">
+                            <div>
+                                <h6 class="mb-0 fw-bold">Mercy Njeri</h6>
+                                <small class="text-muted">Eldoret</small>
+                            </div>
+                        </div>
+                        <p class="card-text">"I love how easy it is to communicate with fundis on the app. My cleaning job was done perfectly!"</p>
+                        <div class="text-warning">
+                            <i class="bi bi-star-fill"></i>
+                            <i class="bi bi-star-fill"></i>
+                            <i class="bi bi-star-fill"></i>
+                            <i class="bi bi-star-fill"></i>
+                            <i class="bi bi-star-fill"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6 col-lg-4">
+                <div class="card h-100 border-0 shadow-sm">
+                    <div class="card-body">
+                        <div class="d-flex align-items-center mb-3">
+                            <img src="https://randomuser.me/api/portraits/men/21.jpg" alt="Customer" class="rounded-circle me-3" width="48" height="48">
+                            <div>
+                                <h6 class="mb-0 fw-bold">Samuel Kariuki</h6>
+                                <small class="text-muted">Thika</small>
+                            </div>
+                        </div>
+                        <p class="card-text">"FundiConnect is my go-to for home repairs. The fundis are professional and trustworthy."</p>
+                        <div class="text-warning">
+                            <i class="bi bi-star-fill"></i>
+                            <i class="bi bi-star-fill"></i>
+                            <i class="bi bi-star-fill"></i>
+                            <i class="bi bi-star-fill"></i>
+                            <i class="bi bi-star-fill"></i>
+                        </div>
                     </div>
                 </div>
             </div>
