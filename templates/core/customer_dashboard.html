@@ -137,7 +137,13 @@
               var markerCluster = L.markerClusterGroup();
               map.addLayer(markerCluster);
               var fundiIcon = L.icon({
-                iconUrl: 'https://cdn-icons-png.flaticon.com/512/3135/3135715.png', // Example avatar icon
+                iconUrl: 'https://cdn-icons-png.flaticon.com/512/149/149060.png', // Blue marker for fundi
+                iconSize: [32, 32],
+                iconAnchor: [16, 32],
+                popupAnchor: [0, -32]
+              });
+              var customerIcon = L.icon({
+                iconUrl: 'https://cdn-icons-png.flaticon.com/512/3135/3135715.png', // Avatar icon for customer
                 iconSize: [32, 32],
                 iconAnchor: [16, 32],
                 popupAnchor: [0, -32]
@@ -169,12 +175,23 @@
                     });
                   });
               }
-              // Center map on customer location if available
-              if (navigator.geolocation) {
-                navigator.geolocation.getCurrentPosition(function(position) {
-                  map.setView([position.coords.latitude, position.coords.longitude], 13);
-                });
-              }
+              // Show customer's location as a distinct marker if available
+              {% if user.latitude and user.longitude %}
+                var customerMarker = L.marker([
+                  {{ user.latitude }},
+                  {{ user.longitude }}
+                ], {icon: customerIcon});
+                customerMarker.bindPopup('<strong>Your Location</strong>');
+                customerMarker.addTo(map);
+                map.setView([{{ user.latitude }}, {{ user.longitude }}], 13);
+              {% else %}
+                // Center map on browser geolocation if available
+                if (navigator.geolocation) {
+                  navigator.geolocation.getCurrentPosition(function(position) {
+                    map.setView([position.coords.latitude, position.coords.longitude], 13);
+                  });
+                }
+              {% endif %}
               updateFundis();
               setInterval(updateFundis, 10000);
             });
