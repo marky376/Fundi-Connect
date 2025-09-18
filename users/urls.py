@@ -4,6 +4,7 @@ from . import views
 urlpatterns = [
     path('fundi-onboarding/', views.fundi_onboarding, name='fundi_onboarding'),
     path('enable-customer-role/', views.enable_customer_role_view, name='enable_customer_role'),
+    path('enable-fundi-role/', views.enable_fundi_role_view, name='enable_fundi_role'),
     path('profile/', views.profile_view, name='profile'),
     path('signup/customer/', views.customer_signup_view, name='customer_signup'),
     path('signup/', views.FundiSignupView.as_view(), name='signup'),
@@ -11,4 +12,5 @@ urlpatterns = [
     path('login/customer/', views.customer_login_view, name='customer_login'),
     path('request-otp/', views.request_otp_view, name='request_otp'),
     path('verify-otp/', views.verify_otp_view, name='verify_otp'),
+    path('switch-role/', views.switch_role_view, name='switch_role'),
 ]

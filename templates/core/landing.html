@@ -3,6 +3,13 @@
 {% block title %}FundiConnect - Find Skilled Workers in Kenya{% endblock %}
 
 {% block content %}
+{% if user.is_authenticated and 'fundi' in user.roles and user.active_role == 'customer' %}
+    <div class="container mb-4 text-end">
+        <a href="{% url 'switch_role' %}?role=fundi" class="btn btn-outline-primary">
+            <i class="bi bi-arrow-repeat me-1"></i>Switch to Fundi Mode
+        </a>
+    </div>
+{% endif %}
 <!-- Hero Section -->
 <section class="hero-section">
     <div class="container">

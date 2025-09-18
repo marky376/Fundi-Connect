@@ -11,7 +11,9 @@ class FundiSignupForm(SignupForm):
     # Phone number field removed
     def save(self, request):
         user = super().save(request)
-        user.role = 'fundi'
+        # Ensure both roles are present for fundi onboarding
+        user.roles = list(set(user.roles + ['fundi', 'customer']))
+        user.active_role = 'fundi'
         user.first_name = self.cleaned_data['first_name']
         user.last_name = self.cleaned_data['last_name']
         user.save()

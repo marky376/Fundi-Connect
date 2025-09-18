@@ -208,6 +208,27 @@
                 
                 <ul class="navbar-nav">
                     {% if user.is_authenticated %}
+                        {% if 'fundi' not in user.roles %}
+                        <li class="nav-item">
+                            <form method="post" action="{% url 'enable_fundi_role' %}" style="display:inline;">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-warning me-2">
+                                    <i class="bi bi-person-badge me-1"></i>Enable Fundi Role
+                                </button>
+                            </form>
+                        </li>
+                        {% endif %}
+                        {% if 'fundi' in user.roles and user.active_role == 'customer' %}
+                        <li class="nav-item">
+                            <a href="{% url 'switch_role' %}?role=fundi" class="btn btn-outline-primary me-2">
+                                <i class="bi bi-arrow-repeat me-1"></i>Switch to Fundi Mode
+                            </a>
+                        </li>
+                        {% endif %}
+                        <!-- DEBUG: Show user roles and active_role -->
+                        <li class="nav-item">
+                            <span class="badge bg-info text-dark">roles: {{ user.roles }} | active_role: {{ user.active_role }}</span>
+                        </li>
                         <li class="nav-item dropdown">
                             <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown">
                                 {% if user.role == 'fundi' and user.fundi_profile and user.fundi_profile.profile_photo %}

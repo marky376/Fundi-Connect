@@ -2,6 +2,13 @@
 {% block title %}Customer Dashboard{% endblock %}
 {% block content %}
 <section class="container py-5">
+  {% if user.is_authenticated and 'fundi' in user.roles and user.active_role == 'customer' %}
+    <div class="mb-4 text-end">
+      <a href="{% url 'switch_role' %}?role=fundi" class="btn btn-outline-primary">
+        <i class="bi bi-arrow-repeat me-1"></i>Switch to Fundi Mode
+      </a>
+    </div>
+  {% endif %}
   <!-- Popular Services Section -->
   <section class="mb-5">
     <div class="container">

@@ -9,6 +9,24 @@ from django.views.decorators.http import require_POST, require_GET
 import random
 from django.core.mail import send_mail
 
+# Management view to enable fundi role
+@login_required
+@require_POST
+def enable_fundi_role_view(request):
+    user = request.user
+    if 'fundi' not in user.roles:
+        user.roles.append('fundi')
+        user.active_role = 'fundi'
+        user.save()
+        request.session['active_role'] = 'fundi'
+        messages.success(request, "Fundi role enabled! You can now switch between fundi and customer modes.")
+    else:
+        user.active_role = 'fundi'
+        user.save()
+        request.session['active_role'] = 'fundi'
+        messages.info(request, "Switched to fundi mode.")
+    return redirect('dashboard')
+
 @login_required
 @require_GET
 def enable_customer_role_view(request):
@@ -129,17 +147,25 @@ class FundiSignupView(SignupView):
     
     def form_valid(self, form):
         response = super().form_valid(form)
-        # Set role to fundi after successful signup
-        self.user.role = 'fundi'
-        self.user.save()
+        user = self.request.user
+        # Ensure both roles are present for fundi onboarding
+        user.roles = list(set(user.roles + ['fundi', 'customer']))
+        user.active_role = 'fundi'
+        user.save()
         return response
 
 
 @login_required
 def fundi_onboarding(request):
-    if request.user.role != 'fundi':
+    # Ensure both roles are present for fundi onboarding
+    if 'fundi' not in request.user.roles:
+        request.user.roles.append('fundi')
+        request.user.save()
+    if 'customer' not in request.user.roles:
+        request.user.roles.append('customer')
+        request.user.save()
+    if request.user.active_role != 'fundi':
         return redirect('dashboard')
-    
     if request.user.onboarding_complete:
         return redirect('dashboard')
     
@@ -180,7 +206,7 @@ def profile_view(request):
     if not request.user.is_verified:
         messages.warning(request, 'Your account is not verified yet. Please wait for admin approval.')
         # Optionally, restrict dashboard and job access elsewhere
-    if request.user.role == 'fundi':
+    if request.user.active_role == 'fundi':
         try:
             context['fundi_profile'] = request.user.fundi_profile
             context['portfolio_images'] = request.user.fundi_profile.portfolio_images.all()
@@ -232,7 +258,7 @@ def profile_view(request):
             if updated:
                 messages.success(request, 'Profile updated successfully!')
                 return redirect('profile')
-    elif request.user.role == 'customer':
+    elif request.user.active_role == 'customer':
         # Handle location, email, and file update for customer
         if request.method == 'POST' and 'location' in request.POST:
             email = request.POST.get('email', '').strip()

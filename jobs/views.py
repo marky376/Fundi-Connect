@@ -148,7 +148,7 @@ from .forms import JobForm, JobApplicationForm
 @login_required
 def apply(request, job_id):
     job = get_object_or_404(Job, id=job_id)
-    if request.user.role != 'fundi':
+    if request.user.active_role != 'fundi':
         messages.error(request, 'Only fundis can apply for jobs.')
         return redirect('jobs:job_detail_jobs', job_id=job_id)
     # Enforce phone verification for job application
@@ -171,7 +171,7 @@ def apply(request, job_id):
 @login_required
 def my_applications(request):
     # Only for fundis
-    if not hasattr(request.user, 'role') or request.user.role != 'fundi':
+    if not hasattr(request.user, 'active_role') or request.user.active_role != 'fundi':
         messages.error(request, 'You are not authorized to view this page.')
         return redirect('/')
     applications = JobApplication.objects.filter(fundi=request.user).select_related('job').order_by('-created_at')
@@ -191,11 +191,11 @@ from users.models import User
 @login_required
 def nudge_fundis(request, job_id):
     job = get_object_or_404(Job, id=job_id)
-    if request.user.role != 'customer' or job.customer != request.user:
+    if request.user.active_role != 'customer' or job.customer != request.user:
         messages.error(request, 'You are not authorized to nudge fundis for this job.')
         return redirect('job_detail_jobs', job_id=job_id)
     # Find fundis matching job location and category
-    fundis = User.objects.filter(role='fundi', location__icontains=job.location)
+    fundis = User.objects.filter(active_role='fundi', location__icontains=job.location)
     notified_count = 0
     for fundi in fundis:
         # For demo: use Django messages, but can be replaced with email/in-app notification
@@ -257,7 +257,7 @@ def job_detail(request, job_id):
     user_has_applied = False
     
     if request.user.is_authenticated and request.user.role == 'fundi':
-        user_has_applied = job.applications.filter(fundi=request.user).exists()
+            user_has_applied = job.applications.filter(fundi=request.user, active_role='fundi').exists()
     
     applicants = []
     payment_completed = False
@@ -279,13 +279,9 @@ def job_detail(request, job_id):
 @login_required
 def job_create(request):
     """Create a new job posting"""
-    if request.user.role != 'customer':
+    if request.user.active_role != 'customer':
         messages.error(request, 'Only customers can post jobs.')
         return redirect('dashboard')
-    # Enforce phone verification for job posting
-    if not getattr(request.user, 'phone_verified', True):
-        messages.warning(request, 'Please verify your phone number to post jobs.')
-        return redirect('verify_otp')
     if not request.user.is_verified:
         # Show countdown and redirect via template
         return render(request, 'jobs/verify_redirect.html', {'redirect_url': '/contact/', 'seconds': 5})
@@ -311,7 +307,7 @@ def job_apply(request, job_id):
     """Apply for a job"""
     job = get_object_or_404(Job, id=job_id)
     
-    if request.user.role != 'fundi':
+    if request.user.active_role != 'fundi':
         messages.error(request, 'Only Fundis can apply for jobs.')
         return redirect('job_detail_jobs', job_id=job_id)
     
@@ -379,7 +375,7 @@ def job_delete(request, job_id):
 @login_required
 def my_applications(request):
     """Show user's job applications"""
-    if request.user.role != 'fundi':
+    if request.user.active_role != 'fundi':
         messages.error(request, 'Only Fundis can view applications.')
         return redirect('dashboard')
     
@@ -394,7 +390,7 @@ def my_applications(request):
 @login_required
 def my_jobs(request):
     """Show user's posted jobs"""
-    if request.user.role != 'customer':
+    if request.user.active_role != 'customer':
         messages.error(request, 'Only customers can view posted jobs.')
         return redirect('dashboard')
     
