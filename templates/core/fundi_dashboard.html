@@ -2,55 +2,70 @@
 {% block title %}Fundi Dashboard{% endblock %}
 {% block content %}
 <section class="container py-5">
-  <div class="row">
-    <div class="col-md-8">
-      <h2 class="fw-bold text-primary mb-4">Welcome, {{ user.first_name|default:user.email }}!</h2>
-      <div class="card mb-4">
-        <div class="card-body">
-          <h4 class="mb-3">Available Jobs</h4>
-          <div class="row">
-            {% for job in available_jobs %}
-              <div class="col-md-6 mb-3">
-                <div class="card shadow-sm">
-                  <div class="card-body">
-                    <h5 class="card-title">{{ job.title }}</h5>
-                    <p class="card-text">{{ job.description|truncatewords:15 }}</p>
-                    <a href="{% url 'job_detail' job.id %}" class="btn btn-outline-primary btn-sm">View Job</a>
+  <div class="row g-4">
+    <div class="col-lg-8">
+      <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="fw-bold text-primary mb-0">Welcome, {{ user.first_name|default:user.email }}!</h2>
+        {% if user.is_authenticated and user.active_role == 'fundi' %}
+            {% if 'customer' in user.roles %}
+                <a href="{% url 'switch_role' %}?role=customer" class="btn btn-outline-success btn-lg rounded-pill shadow-sm"><i class="bi bi-person-plus me-2"></i>Switch to Customer Mode</a>
+            {% else %}
+                <a href="{% url 'enable_customer_role' %}" class="btn btn-outline-success btn-lg rounded-pill shadow-sm"><i class="bi bi-person-plus me-2"></i>Enable Customer Role</a>
+            {% endif %}
+        {% endif %}
+      </div>
+      <div class="row g-4">
+        <div class="col-md-6">
+          <div class="card shadow-lg border-0 h-100">
+            <div class="card-body">
+              <h4 class="mb-3 text-primary"><i class="bi bi-briefcase me-2"></i>Available Jobs</h4>
+              <div class="row g-2">
+                {% for job in available_jobs %}
+                  <div class="col-12 mb-2">
+                    <div class="card border-0 shadow-sm">
+                      <div class="card-body">
+                        <h5 class="card-title">{{ job.title }}</h5>
+                        <p class="card-text text-muted small">{{ job.description|truncatewords:15 }}</p>
+                        <a href="{% url 'job_detail' job.id %}" class="btn btn-outline-primary btn-sm">View Job</a>
+                      </div>
+                    </div>
                   </div>
-                </div>
+                {% empty %}
+                  <p class="text-muted">No available jobs at the moment.</p>
+                {% endfor %}
               </div>
-            {% empty %}
-              <p class="text-muted">No available jobs at the moment.</p>
-            {% endfor %}
+            </div>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="card shadow-lg border-0 h-100">
+            <div class="card-body">
+              <h4 class="mb-3 text-info"><i class="bi bi-send-check me-2"></i>My Applications</h4>
+              {% if my_applications %}
+                <ul class="list-group list-group-flush">
+                  {% for app in my_applications %}
+                    <li class="list-group-item d-flex justify-content-between align-items-center bg-transparent">
+                      <span class="fw-semibold text-dark"><i class="bi bi-hammer me-2 text-accent"></i>{{ app.job.title }}</span>
+                      <span class="badge bg-info ms-2">{{ app.status|title }}</span>
+                    </li>
+                  {% endfor %}
+                </ul>
+              {% else %}
+                <p class="text-muted">You haven't applied for any jobs yet.</p>
+              {% endif %}
+            </div>
           </div>
         </div>
       </div>
-      <div class="card mb-4">
+      <div class="card mt-4 shadow-lg border-0">
         <div class="card-body">
-          <h4 class="mb-3">My Applications</h4>
-          {% if my_applications %}
-            <ul class="list-group">
-              {% for app in my_applications %}
-                <li class="list-group-item d-flex justify-content-between align-items-center">
-                  <span>{{ app.job.title }}</span>
-                  <span class="badge bg-info">{{ app.status|title }}</span>
-                </li>
-              {% endfor %}
-            </ul>
-          {% else %}
-            <p class="text-muted">You haven't applied for any jobs yet.</p>
-          {% endif %}
-        </div>
-      </div>
-      <div class="card">
-        <div class="card-body">
-          <h4 class="mb-3">Assigned Jobs</h4>
+          <h4 class="mb-3 text-success"><i class="bi bi-check2-circle me-2"></i>Assigned Jobs</h4>
           {% if assigned_jobs %}
-            <ul class="list-group">
+            <ul class="list-group list-group-flush">
               {% for job in assigned_jobs %}
-                <li class="list-group-item d-flex justify-content-between align-items-center">
-                  <span>{{ job.title }}</span>
-                  <span class="badge bg-success">{{ job.status|title }}</span>
+                <li class="list-group-item d-flex justify-content-between align-items-center bg-transparent">
+                  <span class="fw-semibold text-dark"><i class="bi bi-briefcase me-2 text-success"></i>{{ job.title }}</span>
+                  <span class="badge bg-success ms-2">{{ job.status|title }}</span>
                 </li>
               {% endfor %}
             </ul>
@@ -60,12 +75,124 @@
         </div>
       </div>
     </div>
-    <div class="col-md-4">
-      <div class="card mb-4">
+    <div class="col-lg-4">
+      <div class="card mb-4 shadow-lg border-0">
         <div class="card-body">
-          <h4 class="mb-3 text-primary">Account Info</h4>
+          <h4 class="mb-3 text-primary"><i class="bi bi-person-circle me-2"></i>Account Info</h4>
           <p><strong>Email:</strong> {{ user.email }}</p>
           <p><strong>Role:</strong> Fundi</p>
+        </div>
+      </div>
+      <div class="card mb-4 shadow-lg border-0">
+        <div class="card-body">
+          <h4 class="mb-3 text-success"><i class="bi bi-geo-alt me-2"></i>Nearby Fundis & Customers</h4>
+          <form id="fundi-filter-form" class="mb-3 d-flex flex-wrap gap-2">
+            <div class="input-group flex-grow-1">
+              <span class="input-group-text bg-white"><i class="bi bi-search text-primary"></i></span>
+              <input type="text" id="skill-filter" class="form-control" placeholder="Filter by skill (e.g. Plumbing)">
+            </div>
+            <button type="button" class="btn btn-outline-primary" onclick="updateFundis()"><i class="bi bi-funnel me-1"></i>Apply Filter</button>
+          </form>
+          <div id="fundi-map" style="height: 350px; border-radius: 18px; box-shadow: 0 4px 24px rgba(0,0,0,0.08); overflow: hidden; margin-bottom: 8px;"></div>
+          <div class="d-flex align-items-center gap-3 mt-2">
+            <span class="d-flex align-items-center"><img src="https://cdn-icons-png.flaticon.com/512/3135/3135768.png" width="24" height="24" class="me-1"> You (Fundi)</span>
+            <span class="d-flex align-items-center"><img src="https://cdn-icons-png.flaticon.com/512/149/149060.png" width="24" height="24" class="me-1"> Customer</span>
+            <span class="d-flex align-items-center"><img src="https://cdn-icons-png.flaticon.com/512/3135/3135715.png" width="24" height="24" class="me-1"> Fundi</span>
+          </div>
+          <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+          <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+          <link rel="stylesheet" href="/static/leaflet.markercluster.css" />
+          <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
+          <script>
+            document.addEventListener('DOMContentLoaded', function() {
+              var map = L.map('fundi-map').setView([-1.286389, 36.817223], 12); // Default to Nairobi
+              L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                maxZoom: 18,
+                attribution: '© OpenStreetMap contributors'
+              }).addTo(map);
+              var markerCluster = L.markerClusterGroup();
+              map.addLayer(markerCluster);
+              var fundiIcon = L.icon({
+                iconUrl: 'https://cdn-icons-png.flaticon.com/512/3135/3135715.png', // Fundi icon
+                iconSize: [32, 32],
+                iconAnchor: [16, 32],
+                popupAnchor: [0, -32]
+              });
+              var fundiFilteredIcon = L.icon({
+                iconUrl: 'https://cdn-icons-png.flaticon.com/512/616/616494.png', // Distinct icon for filtered fundis
+                iconSize: [32, 32],
+                iconAnchor: [16, 32],
+                popupAnchor: [0, -32]
+              });
+              var customerIcon = L.icon({
+                iconUrl: 'https://cdn-icons-png.flaticon.com/512/149/149060.png', // Blue marker for customer
+                iconSize: [32, 32],
+                iconAnchor: [16, 32],
+                popupAnchor: [0, -32]
+              });
+              var myFundiIcon = L.icon({
+                iconUrl: 'https://cdn-icons-png.flaticon.com/512/3135/3135768.png', // Distinct icon for this fundi
+                iconSize: [36, 36],
+                iconAnchor: [18, 36],
+                popupAnchor: [0, -36]
+              });
+              function getFilterParams() {
+                var skill = document.getElementById('skill-filter').value.trim();
+                var params = [];
+                if (skill) params.push('skill=' + encodeURIComponent(skill));
+                return params.length ? '?' + params.join('&') : '';
+              }
+              function updateFundis() {
+                var url = '/api/fundi-locations/' + getFilterParams();
+                fetch(url)
+                  .then(response => response.json())
+                  .then(data => {
+                    markerCluster.clearLayers();
+                    // Show all fundis
+                    data.fundis.forEach(fundi => {
+                      var icon = fundiIcon;
+                      if (data.filtered && fundi.filtered) {
+                        icon = fundiFilteredIcon;
+                      }
+                      // Show this fundi's marker distinctly
+                      if (fundi.id === {{ user.id }}) {
+                        icon = myFundiIcon;
+                      }
+                      var marker = L.marker([fundi.latitude, fundi.longitude], {icon: icon});
+                      marker.bindPopup(`<strong>${fundi.name}</strong><br>${fundi.skills.join(', ')}<br>${fundi.location}<br>Status: <span style='color:${fundi.available ? 'green' : 'red'}'>${fundi.available ? 'Available' : 'Unavailable'}</span>`);
+                      markerCluster.addLayer(marker);
+                    });
+                    // Show customers
+                    if (data.customers) {
+                      data.customers.forEach(customer => {
+                        var marker = L.marker([customer.latitude, customer.longitude], {icon: customerIcon});
+                        marker.bindPopup(`<strong>Customer</strong><br>${customer.name}<br>${customer.location}`);
+                        markerCluster.addLayer(marker);
+                      });
+                    }
+                  });
+              }
+              // Show this fundi's location as a distinct marker if available
+              {% if user.latitude and user.longitude %}
+                var myFundiMarker = L.marker([
+                  {{ user.latitude }},
+                  {{ user.longitude }}
+                ], {icon: myFundiIcon});
+                myFundiMarker.bindPopup('<strong>Your Location (Fundi)</strong>');
+                myFundiMarker.addTo(map);
+                map.setView([{{ user.latitude }}, {{ user.longitude }}], 13);
+              {% else %}
+                // Center map on browser geolocation if available
+                if (navigator.geolocation) {
+                  navigator.geolocation.getCurrentPosition(function(position) {
+                    map.setView([position.coords.latitude, position.coords.longitude], 13);
+                  });
+                }
+              {% endif %}
+              updateFundis();
+              setInterval(updateFundis, 10000);
+            });
+          </script>
         </div>
       </div>
     </div>

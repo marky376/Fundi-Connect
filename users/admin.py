@@ -17,24 +17,28 @@ class PortfolioImageInline(admin.TabularInline):
 
 
 class UserAdmin(BaseUserAdmin):
-    list_display = ('email', 'username', 'role', 'is_verified', 'onboarding_complete', 'date_joined')
-    list_filter = ('role', 'is_verified', 'onboarding_complete', 'date_joined')
+    list_display = ('email', 'username', 'active_role', 'display_roles', 'is_verified', 'onboarding_complete', 'date_joined')
+    list_filter = ('active_role', 'is_verified', 'onboarding_complete', 'date_joined')
     search_fields = ('email', 'username', 'first_name', 'last_name')
     ordering = ('-date_joined',)
     
     fieldsets = BaseUserAdmin.fieldsets + (
         ('FundiConnect Info', {
-            'fields': ('role', 'phone_number', 'location', 'is_verified', 'onboarding_complete')
+            'fields': ('active_role', 'roles', 'phone_number', 'location', 'is_verified', 'onboarding_complete')
         }),
     )
-    
+
     add_fieldsets = BaseUserAdmin.add_fieldsets + (
         ('FundiConnect Info', {
-            'fields': ('email', 'role', 'phone_number', 'location')
+            'fields': ('email', 'active_role', 'roles', 'phone_number', 'location')
         }),
     )
     
     inlines = [FundiProfileInline]
+
+    def display_roles(self, obj):
+        return ', '.join(obj.roles) if obj.roles else ''
+    display_roles.short_description = 'Roles'
 
 
 class FundiProfileAdmin(admin.ModelAdmin):

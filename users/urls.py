@@ -3,6 +3,7 @@ from . import views
 
 urlpatterns = [
     path('fundi-onboarding/', views.fundi_onboarding, name='fundi_onboarding'),
+    path('enable-customer-role/', views.enable_customer_role_view, name='enable_customer_role'),
     path('profile/', views.profile_view, name='profile'),
     path('signup/customer/', views.customer_signup_view, name='customer_signup'),
     path('signup/', views.FundiSignupView.as_view(), name='signup'),

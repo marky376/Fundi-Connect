@@ -25,13 +25,9 @@ from PIL import Image
 
 
 class User(AbstractUser):
-    ROLE_CHOICES = [
-        ('customer', 'Customer'),
-        ('fundi', 'Fundi'),
-    ]
-    
     email = models.EmailField(unique=True)
-    role = models.CharField(max_length=10, choices=ROLE_CHOICES)
+    roles = models.JSONField(default=list)  # e.g. ["customer", "fundi"]
+    active_role = models.CharField(max_length=10, default="fundi")
     phone_number = models.CharField(max_length=20, blank=True)
     phone_verified = models.BooleanField(default=False)
     otp_code = models.CharField(max_length=6, blank=True)
@@ -44,12 +40,22 @@ class User(AbstractUser):
     date_joined = models.DateTimeField(auto_now_add=True)
     is_verified = models.BooleanField(default=False)
     onboarding_complete = models.BooleanField(default=False)
-    
+
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = ['username']
-    
+
     def __str__(self):
         return self.email
+
+    def has_role(self, role):
+        return role in self.roles
+
+    def switch_role(self, role):
+        if role in self.roles:
+            self.active_role = role
+            self.save()
+            return True
+        return False
 
 
 class FundiProfile(models.Model):

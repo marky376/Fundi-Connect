@@ -3,7 +3,7 @@ from django.http import JsonResponse
 def fundi_locations_api(request):
     skill_filter = request.GET.get('skill')
     available_filter = request.GET.get('available')
-    fundis = User.objects.filter(role='fundi', fundi_profile__latitude__isnull=False, fundi_profile__longitude__isnull=False)
+    fundis = User.objects.filter(active_role='fundi', fundi_profile__latitude__isnull=False, fundi_profile__longitude__isnull=False)
     if skill_filter:
         fundis = fundis.filter(fundi_profile__skills__icontains=skill_filter)
     if available_filter == 'true':
@@ -47,16 +47,16 @@ def dashboard(request):
         return redirect('verify_otp')
 
     # Check if fundi needs to complete onboarding
-    if (request.user.role == 'fundi' and 
+    if (request.user.active_role == 'fundi' and 
         not request.user.onboarding_complete):
         return redirect('fundi_onboarding')
 
     # Show role-specific dashboard
-    if request.user.role == 'customer':
+    if request.user.active_role == 'customer':
         # Customer dashboard - show their posted jobs and available fundis
         user_jobs = request.user.posted_jobs.all().order_by('-created_at')[:5]
         available_jobs = Job.objects.filter(status='open').order_by('-created_at')[:6]
-        fundis = User.objects.filter(role='fundi', location__isnull=False).exclude(location='').select_related('fundi_profile')
+        fundis = User.objects.filter(active_role='fundi', location__isnull=False).exclude(location='').select_related('fundi_profile')
         from users.models import Notification
         notifications = Notification.objects.filter(user=request.user).order_by('-created_at')[:10]
         return render(request, 'core/customer_dashboard.html', {
@@ -66,7 +66,7 @@ def dashboard(request):
             'notifications': notifications
         })
 
-    elif request.user.role == 'fundi':
+    elif request.user.active_role == 'fundi':
         # Fundi dashboard - show available jobs filtered by fundi skills/category
         fundi_skills = request.user.fundi_profile.skills if hasattr(request.user, 'fundi_profile') else []
         available_jobs = Job.objects.filter(
@@ -142,7 +142,7 @@ def job_detail(request, job_id):
     job = get_object_or_404(Job, id=job_id)
     user_has_applied = False
     
-    if request.user.is_authenticated and request.user.role == 'fundi':
+    if request.user.is_authenticated and request.user.active_role == 'fundi':
         user_has_applied = job.applications.filter(fundi=request.user).exists()
     
     context = {

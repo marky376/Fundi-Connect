@@ -1,11 +1,46 @@
+
 from django.shortcuts import render, redirect
 from django.contrib.auth import login, authenticate
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.views.decorators.csrf import csrf_exempt
 from django.utils import timezone
+from django.views.decorators.http import require_POST, require_GET
 import random
 from django.core.mail import send_mail
+
+@login_required
+@require_GET
+def enable_customer_role_view(request):
+    user = request.user
+    if 'customer' not in user.roles:
+        user.roles.append('customer')
+        user.active_role = 'customer'
+        user.save()
+        request.session['active_role'] = 'customer'
+        messages.success(request, "Customer role enabled! You can now post jobs and interact as a customer.")
+    else:
+        user.active_role = 'customer'
+        user.save()
+        request.session['active_role'] = 'customer'
+        messages.info(request, "Switched to customer mode.")
+    return redirect('dashboard')
+
+@login_required
+def switch_role_view(request):
+    user = request.user
+    next_role = request.GET.get('role')
+    if next_role and user.has_role(next_role):
+        user.switch_role(next_role)
+        # Optionally set session variable for active role
+        request.session['active_role'] = next_role
+        messages.success(request, f"Switched to {next_role.capitalize()} mode.")
+        if next_role == 'customer':
+            return redirect('customer_dashboard')
+        else:
+            return redirect('fundi_dashboard')
+    messages.error(request, "Role switch failed or not allowed.")
+    return redirect('dashboard')
 
 # OTP verification view
 @login_required
