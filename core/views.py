@@ -46,8 +46,9 @@ def dashboard(request):
         messages.warning(request, 'Please verify your email to access all features.')
         return redirect('verify_otp')
 
-    # Check if fundi needs to complete onboarding
-    if (request.user.active_role == 'fundi' and 
+    # Check if fundi needs to complete onboarding - only if the user actually has the fundi role
+    if ('fundi' in getattr(request.user, 'roles', []) and
+        request.user.active_role == 'fundi' and 
         not request.user.onboarding_complete):
         return redirect('fundi_onboarding')
 

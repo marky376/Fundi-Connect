@@ -8,7 +8,7 @@
         <div class="card-body text-center">
           <h5 class="fw-bold text-primary">User Stats</h5>
           <hr>
-          <p class="mb-1"><strong>Role:</strong> {{ user.role|title }}</p>
+          <p class="mb-1"><strong>Role:</strong> {{ user.active_role|title }}</p>
           <p class="mb-1"><strong>Jobs Posted:</strong> {{ user.posted_jobs.count|default:0 }}</p>
           <p class="mb-1"><strong>Jobs Completed:</strong> {{ user.completed_jobs.count|default:0 }}</p>
           <p class="mb-1"><strong>Applications:</strong> {{ user.job_applications.count|default:0 }}</p>

@@ -26,7 +26,9 @@ class CustomerSignupForm(SignupForm):
     # Phone number field removed
     def save(self, request):
         user = super().save(request)
-        user.role = 'customer'
+        # Ensure the user has the customer role and is set to customer mode
+        user.roles = list(set(user.roles + ['customer']))
+        user.active_role = 'customer'
         user.first_name = self.cleaned_data['first_name']
         user.last_name = self.cleaned_data['last_name']
         user.save()

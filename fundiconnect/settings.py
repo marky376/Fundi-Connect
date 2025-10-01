@@ -11,6 +11,8 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 
 from pathlib import Path
+import os
+from django.core.exceptions import ImproperlyConfigured
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -19,11 +21,19 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
-# SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-a$*@hgkao8##8y05oi*0jff^(+c4l%cc5msx&7sp9a8l0==6*0'
+def get_env_variable(var_name, default=None):
+    try:
+        return os.environ[var_name]
+    except KeyError:
+        if default is not None:
+            return default
+        raise ImproperlyConfigured(f"Set the {var_name} environment variable")
 
-# SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+SECRET_KEY = get_env_variable('DJANGO_SECRET_KEY', 'unsafe-default-key')
+
+DEBUG = os.environ.get('DJANGO_DEBUG', 'True') == 'True'
+if DEBUG:
+    print('WARNING: DEBUG mode is ON. Do not use DEBUG=True in production!')
 
 ALLOWED_HOSTS = []
 
@@ -168,8 +178,17 @@ EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
-EMAIL_HOST_USER = 'mmutuamark@gmail.com'
-EMAIL_HOST_PASSWORD = 'arll jvim zcbs ryep'
+EMAIL_HOST_USER = get_env_variable('EMAIL_HOST_USER', 'your-email@example.com')
+EMAIL_HOST_PASSWORD = get_env_variable('EMAIL_HOST_PASSWORD', '')
+# Default from address used for system emails (OTP, notifications, password reset)
+DEFAULT_FROM_EMAIL = get_env_variable('DEFAULT_FROM_EMAIL', 'fguila2357@gmail.com')
+
+# Gmail OAuth2 settings (for SMTP with XOAUTH2)
+GMAIL_OAUTH2_CLIENT_ID = get_env_variable('GMAIL_OAUTH2_CLIENT_ID', '')
+GMAIL_OAUTH2_CLIENT_SECRET = get_env_variable('GMAIL_OAUTH2_CLIENT_SECRET', '')
+GMAIL_OAUTH2_REFRESH_TOKEN = get_env_variable('GMAIL_OAUTH2_REFRESH_TOKEN', '')
+GMAIL_SMTP_HOST = get_env_variable('GMAIL_SMTP_HOST', 'smtp.gmail.com')
+GMAIL_SMTP_PORT = int(get_env_variable('GMAIL_SMTP_PORT', '587'))
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field

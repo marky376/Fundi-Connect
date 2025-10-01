@@ -8,6 +8,10 @@ from django.utils import timezone
 from django.views.decorators.http import require_POST, require_GET
 import random
 from django.core.mail import send_mail
+from django.conf import settings
+from .gmail_oauth import send_via_gmail_oauth2
+from django.core.cache import cache
+from django.http import HttpResponse
 
 # Management view to enable fundi role
 @login_required
@@ -45,18 +49,54 @@ def enable_customer_role_view(request):
     return redirect('dashboard')
 
 @login_required
+@require_POST
 def switch_role_view(request):
     user = request.user
-    next_role = request.GET.get('role')
-    if next_role and user.has_role(next_role):
-        user.switch_role(next_role)
-        # Optionally set session variable for active role
-        request.session['active_role'] = next_role
-        messages.success(request, f"Switched to {next_role.capitalize()} mode.")
-        if next_role == 'customer':
+    # role should come from POST payload now
+    next_role = request.POST.get('role')
+    # Rate-limit: prevent rapid role flipping (60s per user)
+    cooldown_key = f'user_role_switch_cooldown:{user.pk}'
+    if cache.get(cooldown_key):
+        return HttpResponse('Role switch rate limit exceeded. Try again later.', status=429)
+    if not next_role:
+        messages.error(request, "No role specified for switching.")
+        return redirect('dashboard')
+
+    # Switching to Fundi: if user already has the fundi role, just switch; otherwise
+    # treat this as an explicit customer request to become a fundi: add the role
+    # and redirect to the onboarding flow.
+    if next_role == 'fundi':
+        if user.has_role('fundi'):
+            user.switch_role('fundi')
+            request.session['active_role'] = 'fundi'
+            messages.success(request, "Switched to Fundi mode.")
+            # If onboarding incomplete, send to onboarding
+            cache.set(cooldown_key, True, 60)
+            if not user.onboarding_complete:
+                return redirect('fundi_onboarding')
+            return redirect('fundi_dashboard')
+        else:
+            # User is explicitly requesting to become a fundi: add role and start onboarding
+            user.roles = list(set(user.roles + ['fundi']))
+            user.active_role = 'fundi'
+            user.save()
+            request.session['active_role'] = 'fundi'
+            cache.set(cooldown_key, True, 60)
+            messages.success(request, "Fundi role enabled — please complete your fundi onboarding.")
+            return redirect('fundi_onboarding')
+
+    # Switching to Customer: only allow if user already has the customer role
+    if next_role == 'customer':
+        if user.has_role('customer'):
+            user.switch_role('customer')
+            request.session['active_role'] = 'customer'
+            cache.set(cooldown_key, True, 60)
+            messages.success(request, "Switched to Customer mode.")
             return redirect('customer_dashboard')
         else:
-            return redirect('fundi_dashboard')
+            messages.error(request, "You don't have the Customer role.")
+            return redirect('dashboard')
+
     messages.error(request, "Role switch failed or not allowed.")
     return redirect('dashboard')
 
@@ -87,8 +127,19 @@ def send_otp_to_email(user):
     user.save()
     subject = "Your FundiConnect OTP"
     message = f"Your FundiConnect OTP is: {otp}"
-    from_email = "your_gmail_address@gmail.com"  # Set in Django settings for production
+    # Use DEFAULT_FROM_EMAIL from settings (falls back to EMAIL_HOST_USER)
+    from_email = getattr(settings, 'DEFAULT_FROM_EMAIL', None) or getattr(settings, 'EMAIL_HOST_USER', 'no-reply@example.com')
     recipient_list = [user.email]
+
+    # If Gmail OAuth2 settings are provided, attempt to use XOAUTH2 SMTP
+    if getattr(settings, 'GMAIL_OAUTH2_CLIENT_ID', '') and getattr(settings, 'GMAIL_OAUTH2_REFRESH_TOKEN', ''):
+        try:
+            send_via_gmail_oauth2(subject, message, from_email, recipient_list)
+            print(f"OTP sent to {user.email} via Gmail OAuth2: {otp}")
+            return
+        except Exception as e:
+            print(f"Gmail OAuth2 send failed, falling back to send_mail: {e}")
+
     try:
         send_mail(subject, message, from_email, recipient_list)
         print(f"OTP sent to {user.email}: {otp}")
@@ -157,14 +208,12 @@ class FundiSignupView(SignupView):
 
 @login_required
 def fundi_onboarding(request):
-    # Ensure both roles are present for fundi onboarding
-    if 'fundi' not in request.user.roles:
-        request.user.roles.append('fundi')
-        request.user.save()
-    if 'customer' not in request.user.roles:
-        request.user.roles.append('customer')
-        request.user.save()
+    # Only allow users who already have the fundi role to access onboarding.
+    if 'fundi' not in getattr(request.user, 'roles', []):
+        messages.error(request, "You don't have the Fundi role. Please enable the Fundi role first.")
+        return redirect('dashboard')
     if request.user.active_role != 'fundi':
+        messages.info(request, 'Please switch to Fundi mode to continue onboarding.')
         return redirect('dashboard')
     if request.user.onboarding_complete:
         return redirect('dashboard')
@@ -312,6 +361,11 @@ def customer_signup_view(request):
         form = CustomerSignupForm(request.POST)
         if form.is_valid():
             user = form.save(request)
+            # Defensive: ensure the saved user is in customer mode
+            if 'customer' not in user.roles:
+                user.roles = list(set(user.roles + ['customer']))
+            user.active_role = 'customer'
+            user.save()
             from django.contrib.auth import BACKEND_SESSION_KEY
             user.backend = 'django.contrib.auth.backends.ModelBackend'
             login(request, user)

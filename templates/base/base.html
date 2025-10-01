@@ -185,7 +185,7 @@
                         {% endif %}
                     </li>
                     {% if user.is_authenticated %}
-                        {% if user.role == 'customer' %}
+                        {% if user.active_role == 'customer' %}
                             <li class="nav-item">
                                 <a class="nav-link" href="{% url 'jobs:job_create' %}">
                                     <i class="bi bi-plus-circle me-1"></i>Post a Job
@@ -196,7 +196,7 @@
                                     <i class="bi bi-list-ul me-1"></i>My Jobs
                                 </a>
                             </li>
-                        {% elif user.role == 'fundi' %}
+                        {% elif user.active_role == 'fundi' %}
                             <li class="nav-item">
                                     <a class="nav-link" href="{% url 'jobs:my_applications' %}">
                                     <i class="bi bi-file-earmark-text me-1"></i>My Applications
@@ -218,11 +218,12 @@
                             </form>
                         </li>
                         {% endif %}
-                        {% if 'fundi' in user.roles and user.active_role == 'customer' %}
+                        {% if user.active_role == 'customer' %}
                         <li class="nav-item">
-                            <a href="{% url 'switch_role' %}?role=fundi" class="btn btn-outline-primary me-2">
+                            <!-- Trigger modal to confirm switching to Fundi -->
+                            <button type="button" class="btn btn-outline-primary me-2" id="trigger-switch-fundi" data-role="fundi">
                                 <i class="bi bi-arrow-repeat me-1"></i>Switch to Fundi Mode
-                            </a>
+                            </button>
                         </li>
                         {% endif %}
                         <!-- DEBUG: Show user roles and active_role -->
@@ -231,9 +232,9 @@
                         </li>
                         <li class="nav-item dropdown">
                             <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown">
-                                {% if user.role == 'fundi' and user.fundi_profile and user.fundi_profile.profile_photo %}
+                                {% if user.active_role == 'fundi' and user.fundi_profile and user.fundi_profile.profile_photo %}
                                     <img src="{{ user.fundi_profile.profile_photo.url }}" class="profile-avatar me-2" style="object-fit:cover; width:40px; height:40px; border-radius:50%; border:2px solid #2563eb;" alt="Avatar">
-                                {% elif user.role == 'customer' and user.profile_photo %}
+                                {% elif user.active_role == 'customer' and user.profile_photo %}
                                     <img src="{{ user.profile_photo.url }}" class="profile-avatar me-2" style="object-fit:cover; width:40px; height:40px; border-radius:50%; border:2px solid #2563eb;" alt="Avatar">
                                 {% else %}
                                     <div class="profile-avatar me-2">
@@ -241,7 +242,7 @@
                                     </div>
                                 {% endif %}
                                 {{ user.first_name|default:user.email }}
-                                {% if user.role == 'fundi' and user.is_verified %}
+                                {% if user.active_role == 'fundi' and user.is_verified %}
                                     <i class="bi bi-patch-check-fill text-success ms-1"></i>
                                 {% endif %}
                             </a>
@@ -341,7 +342,9 @@
                             <li><a href="{% url 'signup' %}" class="text-light text-decoration-none">Join as Fundi</a></li>
                             <li><a href="{% url 'customer_signup' %}" class="text-light text-decoration-none">Join as Customer</a></li>
                         {% else %}
-                            <li><a href="{% url 'fundi_onboarding' %}" class="text-light text-decoration-none">Fundi Onboarding</a></li>
+                            {% if 'fundi' in user.roles %}
+                                <li><a href="{% url 'fundi_onboarding' %}" class="text-light text-decoration-none">Fundi Onboarding</a></li>
+                            {% endif %}
                         {% endif %}
                         <li><a href="https://fundiconnect.co.ke/help" class="text-light text-decoration-none" target="_blank">Help Center</a></li>
                         <li><a href="https://fundiconnect.co.ke/terms" class="text-light text-decoration-none" target="_blank">Terms of Service</a></li>
@@ -389,5 +392,89 @@
         });
     </script>
     {% block extra_js %}{% endblock %}
+        <!-- Confirmation modal for switching roles -->
+        <div class="modal fade" id="confirmSwitchModal" tabindex="-1" aria-labelledby="confirmSwitchLabel" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="confirmSwitchLabel">Confirm role change</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        Are you sure you want to switch to Fundi mode? This will let you create a Fundi profile and apply for jobs. You will be asked to complete onboarding.
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="button" class="btn btn-primary" id="confirm-switch">Yes, continue</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <script>
+            (function(){
+                const triggers = document.querySelectorAll('[data-switch-role]');
+                const confirmBtn = document.getElementById('confirm-switch');
+                const confirmModalEl = document.getElementById('confirmSwitchModal');
+                let roleToSwitch = 'fundi';
+
+                // Attach click handlers to all elements that declare data-switch-role
+                if (triggers && triggers.length) {
+                    triggers.forEach(function(triggerEl){
+                        triggerEl.addEventListener('click', function(e){
+                            // store role and show bootstrap modal
+                            roleToSwitch = this.getAttribute('data-switch-role') || 'fundi';
+                            const modal = new bootstrap.Modal(confirmModalEl);
+                            modal.show();
+                        });
+                    });
+                }
+                // CSRF helper (reads Django csrftoken cookie)
+                function getCookie(name) {
+                    const value = `; ${document.cookie}`;
+                    const parts = value.split(`; ${name}=`);
+                    if (parts.length === 2) return parts.pop().split(';').shift();
+                }
+
+                if (confirmBtn) {
+                    confirmBtn.addEventListener('click', function(){
+                        const csrfToken = getCookie('csrftoken');
+                        if (!csrfToken) {
+                            alert('CSRF token not found. Please reload the page and try again.');
+                            return;
+                        }
+
+                        // POST to switch-role with CSRF token
+                        fetch(`/users/switch-role/`, {
+                            method: 'POST',
+                            credentials: 'same-origin',
+                            headers: {
+                                'X-Requested-With': 'XMLHttpRequest',
+                                'X-CSRFToken': csrfToken,
+                                'Content-Type': 'application/x-www-form-urlencoded'
+                            },
+                            body: `role=${encodeURIComponent(roleToSwitch)}`
+                        }).then(resp => {
+                            if (resp.redirected) {
+                                window.location.href = resp.url;
+                                return;
+                            }
+                            if (resp.status === 200 || resp.status === 204) {
+                                window.location.reload();
+                                return;
+                            }
+                            if (resp.status === 429) {
+                                alert('Please wait before switching roles again.');
+                                return;
+                            }
+                            return resp.text().then(t=>{ alert('Role switch failed: ' + resp.status + '\n' + t); });
+                        }).catch(err => {
+                            console.error(err);
+                            alert('Role switch failed. Please try again.');
+                        });
+                    });
+                }
+            })();
+        </script>
 </body>
 </html>

@@ -162,6 +162,22 @@ python manage.py collectstatic
 - Debug mode should be False in production
 - Use HTTPS in production
 
+## Role switching & onboarding
+
+This project uses a two-part role model for users:
+
+- `roles` (list): a JSON list of roles the user has been granted (for example: `['customer']` or `['customer','fundi']`).
+- `active_role` (string): the currently active role for the session (for example: `'customer'` or `'fundi'`).
+
+Users start as `customer` by default. Becoming a Fundi is an explicit opt-in: a customer clicks "Switch to Fundi Mode" in the UI, confirms the action in a modal, and the server grants the `fundi` role and redirects the user to the Fundi onboarding flow. Customers will not be forced into Fundi onboarding automatically.
+
+Cooldown / rate-limiting
+- To avoid accidental or abusive rapid role flipping, role switches are rate-limited per-user (60 seconds). The server uses Django's cache framework to enforce a per-user cooldown and will return HTTP 429 (Too Many Requests) while the cooldown is active. In development the default locmem cache is used; in production use a shared cache backend (Redis or Memcached) so cooldowns work consistently across processes/hosts.
+
+Security & deployment notes
+- Role switching is a state-changing action and therefore uses POST with CSRF protection. The frontend confirmation modal sends a POST with the CSRF token.
+- Ensure `DEBUG=False`, configure `ALLOWED_HOSTS`, and use a durable cache backend in production.
+
 ## Contributing
 
 1. Fork the repository

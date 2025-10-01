@@ -8,16 +8,16 @@
         <div class="card-body p-5">
           <h2 class="fw-bold mb-3 text-primary">My Profile</h2>
           <div class="mb-3 text-center">
-            {% if user.role == 'customer' and user.profile_photo %}
+            {% if user.active_role == 'customer' and user.profile_photo %}
               <img src="{{ user.profile_photo.url }}" class="img-fluid rounded-circle shadow-sm mb-2" style="max-width:120px;max-height:120px;" alt="Profile Photo">
-            {% elif user.role == 'customer' %}
+            {% elif user.active_role == 'customer' %}
               <img src="https://cdn-icons-png.flaticon.com/512/3135/3135715.png" class="img-fluid rounded-circle shadow-sm mb-2" style="max-width:120px;max-height:120px;" alt="Default Avatar">
             {% endif %}
           </div>
           <p class="mb-2"><strong>Name:</strong> {{ user.first_name }} {{ user.last_name }}</p>
           <p class="mb-2"><strong>Email:</strong> {{ user.email }}</p>
-          <p class="mb-2"><strong>Role:</strong> {{ user.role|title }}</p>
-          {% if user.role == 'customer' %}
+          <p class="mb-2"><strong>Role:</strong> {{ user.active_role|title }}</p>
+          {% if user.active_role == 'customer' %}
             <hr>
             <form method="post" action="" class="mb-3" enctype="multipart/form-data">
               {% csrf_token %}

@@ -28,10 +28,10 @@
                             </div>
                         </div>
                     {% endif %}
-                    {% if user.is_authenticated and user.role == 'fundi' and job.status == 'open' %}
+                    {% if user.is_authenticated and user.active_role == 'fundi' and job.status == 'open' %}
                         <a href="{% url 'jobs:apply' job.id %}" class="btn btn-success w-100 mt-3">Apply for this Job</a>
                     {% endif %}
-                    {% if user.is_authenticated and user.role == 'customer' and job.customer == user %}
+                    {% if user.is_authenticated and user.active_role == 'customer' and job.customer == user %}
                         <a href="{% url 'jobs:job_update_status' job.id %}" class="btn btn-warning mb-3">Update Job Status</a>
                         <hr>
                         {% if payment_completed %}

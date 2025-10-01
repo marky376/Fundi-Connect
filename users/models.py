@@ -27,7 +27,8 @@ from PIL import Image
 class User(AbstractUser):
     email = models.EmailField(unique=True)
     roles = models.JSONField(default=list)  # e.g. ["customer", "fundi"]
-    active_role = models.CharField(max_length=10, default="fundi")
+    # Default to 'customer' so newly created customer accounts don't start in fundi mode
+    active_role = models.CharField(max_length=10, default="customer")
     phone_number = models.CharField(max_length=20, blank=True)
     phone_verified = models.BooleanField(default=False)
     otp_code = models.CharField(max_length=6, blank=True)

@@ -7,11 +7,15 @@
       <div class="d-flex justify-content-between align-items-center mb-4">
         <h2 class="fw-bold text-primary mb-0">Welcome, {{ user.first_name|default:user.email }}!</h2>
         {% if user.is_authenticated and user.active_role == 'fundi' %}
-            {% if 'customer' in user.roles %}
-                <a href="{% url 'switch_role' %}?role=customer" class="btn btn-outline-success btn-lg rounded-pill shadow-sm"><i class="bi bi-person-plus me-2"></i>Switch to Customer Mode</a>
-            {% else %}
-                <a href="{% url 'enable_customer_role' %}" class="btn btn-outline-success btn-lg rounded-pill shadow-sm"><i class="bi bi-person-plus me-2"></i>Enable Customer Role</a>
-            {% endif %}
+      {% if 'customer' in user.roles %}
+        <form method="post" action="{% url 'switch_role' %}" style="display:inline;">
+          {% csrf_token %}
+          <input type="hidden" name="role" value="customer">
+          <button type="submit" class="btn btn-outline-success btn-lg rounded-pill shadow-sm"><i class="bi bi-person-plus me-2"></i>Switch to Customer Mode</button>
+        </form>
+      {% else %}
+        <a href="{% url 'enable_customer_role' %}" class="btn btn-outline-success btn-lg rounded-pill shadow-sm"><i class="bi bi-person-plus me-2"></i>Enable Customer Role</a>
+      {% endif %}
         {% endif %}
       </div>
       <div class="row g-4">
