@@ -1,0 +1,11 @@
+venv/
+.venv/
+__pycache__/
+*.py[cod]
+db.sqlite3
+secrets/
+*.egg-info/
+.pytest_cache/
+*.log
+/.env
+/.venvsecrets/

@@ -29,6 +29,19 @@ def get_env_variable(var_name, default=None):
             return default
         raise ImproperlyConfigured(f"Set the {var_name} environment variable")
 
+
+def read_secret_file(secret_name):
+    """Read Docker secret from /run/secrets/<secret_name> if present.
+
+    Returns None if no file exists.
+    """
+    secret_path = f"/run/secrets/{secret_name}"
+    try:
+        with open(secret_path, 'r', encoding='utf-8') as f:
+            return f.read().strip()
+    except FileNotFoundError:
+        return None
+
 SECRET_KEY = get_env_variable('DJANGO_SECRET_KEY', 'unsafe-default-key')
 
 DEBUG = os.environ.get('DJANGO_DEBUG', 'True') == 'True'
@@ -179,16 +192,43 @@ EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
 EMAIL_HOST_USER = get_env_variable('EMAIL_HOST_USER', 'your-email@example.com')
+# Allow Docker secrets as a fallback for EMAIL_HOST_PASSWORD
 EMAIL_HOST_PASSWORD = get_env_variable('EMAIL_HOST_PASSWORD', '')
+if not EMAIL_HOST_PASSWORD:
+    secret_pw = read_secret_file('EMAIL_HOST_PASSWORD')
+    if secret_pw:
+        EMAIL_HOST_PASSWORD = secret_pw
 # Default from address used for system emails (OTP, notifications, password reset)
 DEFAULT_FROM_EMAIL = get_env_variable('DEFAULT_FROM_EMAIL', 'fguila2357@gmail.com')
+if not DEFAULT_FROM_EMAIL:
+    secret_from = read_secret_file('DEFAULT_FROM_EMAIL')
+    if secret_from:
+        DEFAULT_FROM_EMAIL = secret_from
 
 # Gmail OAuth2 settings (for SMTP with XOAUTH2)
 GMAIL_OAUTH2_CLIENT_ID = get_env_variable('GMAIL_OAUTH2_CLIENT_ID', '')
+if not GMAIL_OAUTH2_CLIENT_ID:
+    GMAIL_OAUTH2_CLIENT_ID = read_secret_file('GMAIL_OAUTH2_CLIENT_ID') or ''
+
 GMAIL_OAUTH2_CLIENT_SECRET = get_env_variable('GMAIL_OAUTH2_CLIENT_SECRET', '')
+if not GMAIL_OAUTH2_CLIENT_SECRET:
+    GMAIL_OAUTH2_CLIENT_SECRET = read_secret_file('GMAIL_OAUTH2_CLIENT_SECRET') or ''
+
 GMAIL_OAUTH2_REFRESH_TOKEN = get_env_variable('GMAIL_OAUTH2_REFRESH_TOKEN', '')
+if not GMAIL_OAUTH2_REFRESH_TOKEN:
+    GMAIL_OAUTH2_REFRESH_TOKEN = read_secret_file('GMAIL_OAUTH2_REFRESH_TOKEN') or ''
+
 GMAIL_SMTP_HOST = get_env_variable('GMAIL_SMTP_HOST', 'smtp.gmail.com')
+if not GMAIL_SMTP_HOST:
+    GMAIL_SMTP_HOST = read_secret_file('GMAIL_SMTP_HOST') or 'smtp.gmail.com'
 GMAIL_SMTP_PORT = int(get_env_variable('GMAIL_SMTP_PORT', '587'))
+if not GMAIL_SMTP_PORT:
+    secret_port = read_secret_file('GMAIL_SMTP_PORT')
+    if secret_port:
+        try:
+            GMAIL_SMTP_PORT = int(secret_port)
+        except ValueError:
+            GMAIL_SMTP_PORT = 587
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field

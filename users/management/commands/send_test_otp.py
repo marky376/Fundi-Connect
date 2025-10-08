@@ -16,7 +16,11 @@ class Command(BaseCommand):
         user, created = User.objects.get_or_create(email=email, defaults={'username': email.split('@')[0]})
         if created:
             self.stdout.write(self.style.SUCCESS(f'Created test user: {email}'))
-        # Use console backend if DEBUG is on or EMAIL_BACKEND overridden in env
-        send_otp_to_email(user)
-        self.stdout.write(self.style.SUCCESS(f'Sent OTP to {email}. OTP stored in user.otp_code'))
-        self.stdout.write(f'OTP: {user.otp_code}')
+        # Attempt to send OTP and report delivery status
+        ok = send_otp_to_email(user)
+        if ok:
+            self.stdout.write(self.style.SUCCESS(f'Sent OTP to {email}. OTP stored in user.otp_code'))
+            self.stdout.write(f'OTP: {user.otp_code}')
+        else:
+            self.stdout.write(self.style.ERROR(f'Failed to deliver OTP to {email}. OTP stored in user.otp_code for testing.'))
+            self.stdout.write(f'OTP: {user.otp_code}')

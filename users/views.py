@@ -128,23 +128,34 @@ def send_otp_to_email(user):
     subject = "Your FundiConnect OTP"
     message = f"Your FundiConnect OTP is: {otp}"
     # Use DEFAULT_FROM_EMAIL from settings (falls back to EMAIL_HOST_USER)
-    from_email = getattr(settings, 'DEFAULT_FROM_EMAIL', None) or getattr(settings, 'EMAIL_HOST_USER', 'no-reply@example.com')
+    # Default from address
+    default_from = getattr(settings, 'DEFAULT_FROM_EMAIL', None) or getattr(settings, 'EMAIL_HOST_USER', 'no-reply@example.com')
+    from_email = default_from
     recipient_list = [user.email]
 
     # If Gmail OAuth2 settings are provided, attempt to use XOAUTH2 SMTP
     if getattr(settings, 'GMAIL_OAUTH2_CLIENT_ID', '') and getattr(settings, 'GMAIL_OAUTH2_REFRESH_TOKEN', ''):
+        # When using Gmail OAuth2, ensure the SMTP 'from' matches the authenticated user
+        # to avoid XOAUTH2 rejection due to from/account mismatch.
+        from_email = getattr(settings, 'EMAIL_HOST_USER', from_email)
         try:
             send_via_gmail_oauth2(subject, message, from_email, recipient_list)
             print(f"OTP sent to {user.email} via Gmail OAuth2: {otp}")
-            return
+            return True
         except Exception as e:
+            import traceback
+            traceback.print_exc()
             print(f"Gmail OAuth2 send failed, falling back to send_mail: {e}")
 
     try:
         send_mail(subject, message, from_email, recipient_list)
         print(f"OTP sent to {user.email}: {otp}")
+        return True
     except Exception as e:
+        import traceback
+        traceback.print_exc()
         print(f"Failed to send OTP: {e}")
+        return False
 
 def request_otp_view(request):
     if not request.user.is_authenticated:
