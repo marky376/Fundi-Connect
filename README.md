@@ -193,3 +193,151 @@ This project is licensed under the MIT License.
 ## Support
 
 For support, email admin@fundiconnect.co.ke or create an issue on GitHub.
+
+from django.db import models
+from django.conf import settings
+from decimal import Decimal
+
+# --- Escrow System Models ---
+
+class Job(models.Model):
+    """
+    Represents a single job posted by a customer, bidded on by a fundi,
+    and managed through the escrow payment flow.
+    """
+    
+    # --- Job Status Choices ---
+    # These are critical for managing the state of the escrow
+    STATUS_PENDING = 'PENDING'    # Job posted, awaiting fundi bids and customer funding
+    STATUS_FUNDED = 'FUNDED'      # Customer has paid into escrow, awaiting work
+    STATUS_IN_PROGRESS = 'IN_PROGRESS' # Fundi has started the work
+    STATUS_COMPLETED = 'COMPLETED'  # Customer marked as complete, fundi payout triggered
+    STATUS_DISPUTED = 'DISPUTED'    # Customer or Fundi reported an issue
+    STATUS_CANCELLED = 'CANCELLED'  # Job cancelled before completion
+
+    JOB_STATUS_CHOICES = [
+        (STATUS_PENDING, 'Pending'),
+        (STATUS_FUNDED, 'Funded'),
+        (STATUS_IN_PROGRESS, 'In Progress'),
+        (STATUS_COMPLETED, 'Completed'),
+        (STATUS_DISPUTED, 'Disputed'),
+        (STATUS_CANCELLED, 'Cancelled'),
+    ]
+
+    # --- Core Job Details ---
+    # NOTE: Adjust 'settings.AUTH_USER_MODEL' if you have separate Customer/Fundi models
+    customer = models.ForeignKey(
+        settings.AUTH_USER_MODEL, 
+        on_delete=models.CASCADE, 
+        related_name='posted_jobs'
+    )
+    fundi = models.ForeignKey(
+        settings.AUTH_USER_MODEL, 
+        on_delete=models.SET_NULL, 
+        related_name='accepted_jobs',
+        null=True, 
+        blank=True  # A job has no fundi until one is assigned
+    )
+    
+    title = models.CharField(max_length=255)
+    description = models.TextField()
+    location = models.CharField(max_length=255, blank=True)
+    
+    # --- Financial & Status Details ---
+    status = models.CharField(
+        max_length=20, 
+        choices=JOB_STATUS_CHOICES, 
+        default=STATUS_PENDING
+    )
+    job_value = models.DecimalField(
+        max_digits=10, 
+        decimal_places=2, 
+        default=0.00 # This is the agreed-upon price
+    )
+    
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"'{self.title}' for {self.customer.username} - {self.status}"
+
+
+class Transaction(models.Model):
+    """
+    Logs every financial movement. This creates an auditable ledger
+    for all payments in, commissions, and payouts out.
+    """
+    
+    # --- Transaction Status Choices ---
+    STATUS_PENDING = 'PENDING'
+    STATUS_SUCCESSFUL = 'SUCCESSFUL'
+    STATUS_FAILED = 'FAILED'
+    
+    TRANSACTION_STATUS_CHOICES = [
+        (STATUS_PENDING, 'Pending'),
+        (STATUS_SUCCESSFUL, 'Successful'),
+        (STATUS_FAILED, 'Failed'),
+    ]
+    
+    # --- Transaction Type Choices ---
+    TYPE_FUNDING = 'FUNDING'   # Customer paying IN to escrow
+    TYPE_PAYOUT = 'PAYOUT'     # Fundi getting paid OUT of escrow
+    TYPE_REFUND = 'REFUND'     # Customer being refunded
+    
+    TRANSACTION_TYPE_CHOICES = [
+        (TYPE_FUNDING, 'Funding'),
+        (TYPE_PAYOUT, 'Payout'),
+        (TYPE_REFUND, 'Refund'),
+    ]
+
+    # --- Core Transaction Details ---
+    job = models.ForeignKey(
+        Job, 
+        on_delete=models.CASCADE, 
+        related_name='transactions'
+    )
+    
+    # We store both users for easy querying, even though they are on the job
+    customer = models.ForeignKey(
+        settings.AUTH_USER_MODEL, 
+        on_delete=models.SET_NULL, 
+        related_name='transactions',
+        null=True
+    )
+    fundi = models.ForeignKey(
+        settings.AUTH_USER_MODEL, 
+        on_delete=models.SET_NULL, 
+        related_name='payouts',
+        null=True,
+        blank=True
+    )
+
+    transaction_type = models.CharField(max_length=20, choices=TRANSACTION_TYPE_CHOICES)
+    status = models.CharField(max_length=20, choices=TRANSACTION_STATUS_CHOICES, default=STATUS_PENDING)
+    
+    # --- Financials ---
+    # This is the gross amount of the transaction
+    amount = models.DecimalField(max_digits=10, decimal_places=2) 
+    
+    # Our commission. Only applies to FUNDING types.
+    platform_fee = models.DecimalField(
+        max_digits=10, 
+        decimal_places=2, 
+        default=0.00
+    )
+    
+    # Net amount. For PAYOUT, this is amount - platform_fee
+    payout_amount = models.DecimalField(
+        max_digits=10, 
+        decimal_places=2, 
+        default=0.00
+    )
+
+    # --- Provider Details ---
+    payment_provider = models.CharField(max_length=50, blank=True) # e.g., 'mpesa', 'pesapal'
+    provider_reference = models.CharField(max_length=255, blank=True) # The M-Pesa code or Pesapal ID
+    
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.transaction_type} for Job {self.job.id} - {self.status}"
