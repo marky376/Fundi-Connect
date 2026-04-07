@@ -214,7 +214,8 @@ class FundiSignupView(SignupView):
         user.roles = list(set(user.roles + ['fundi', 'customer']))
         user.active_role = 'fundi'
         user.save()
-        return response
+        send_otp_to_email(user)
+        return redirect('verify_otp')
 
 
 @login_required
@@ -380,8 +381,9 @@ def customer_signup_view(request):
             from django.contrib.auth import BACKEND_SESSION_KEY
             user.backend = 'django.contrib.auth.backends.ModelBackend'
             login(request, user)
-            messages.success(request, 'Account created successfully!')
-            return redirect('dashboard')
+            send_otp_to_email(user)
+            messages.success(request, 'Account created successfully! An OTP has been sent to your email.')
+            return redirect('verify_otp')
     else:
         form = CustomerSignupForm()
     return render(request, 'users/customer_signup.html', {'form': form})
